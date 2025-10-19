@@ -12,6 +12,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/db"
 	"backend/internal/storage"
+	"backend/internal/api"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -49,8 +50,7 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// TODO: Add API endpoints (auth/upload/assets/restore)
-	// e.g. api.RegisterRoutes(r, pg, store, cfg)
+	api.RegisterRoutes(r, pg, store, cfg)
 
 	addr := fmt.Sprintf("%s:%s", cfg.AppHost, cfg.AppPort)
 	srv := &http.Server{
@@ -63,7 +63,7 @@ func main() {
 
 	// === Start server in background ===
 	go func() {
-		fmt.Printf("🚀 PixSync server running on %s\n", addr)
+		fmt.Printf("PixSync server running on %s\n", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}
@@ -73,7 +73,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
-	log.Println("🔻 Shutdown signal received, stopping server...")
+	log.Println("Shutdown signal received, stopping server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
