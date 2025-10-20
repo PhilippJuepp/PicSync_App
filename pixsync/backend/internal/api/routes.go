@@ -17,8 +17,17 @@ func RegisterRoutes(r chi.Router, pg *db.Postgres, store storage.Storage, cfg *c
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// - /auth (Login/Register)
-	// - /upload
-	// - /assets
-	// - /restore
+	// === Auth ===
+	r.Post("/auth/register", RegisterHandler(pg))
+	r.Post("/auth/login", LoginHandler(pg))
+
+	r.Group(func(protected chi.Router) {
+		protected.Use(JWTMiddleware)
+		protected.Post("/upload", UploadHandler(pg, store))
+	})
+
+	r.Post("/auth/register", RegisterHandler(pg))
+	r.Post("/auth/login", LoginHandler(pg))
+	r.Post("/auth/refresh", RefreshHandler(pg))
+	r.Post("/auth/logout", LogoutHandler(pg))
 }

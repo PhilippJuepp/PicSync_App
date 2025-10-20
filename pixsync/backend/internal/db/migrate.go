@@ -5,17 +5,49 @@ import (
 )
 
 func (p *Postgres) Migrate() error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS users (
-	  id SERIAL PRIMARY KEY,
-	  email TEXT NOT NULL UNIQUE,
-	  password_hash TEXT NOT NULL,
-	  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-	);
-	`
-	_, err := p.DB.Exec(schema)
-	if err != nil {
-		return fmt.Errorf("migrate users: %w", err)
-	}
-	return nil
+    schema := `
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+    );
+
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      refresh_token_hash TEXT NOT NULL,
+      device_name TEXT,
+      device_id TEXT,
+      ip TEXT,
+      user_agent TEXT,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      last_used_at TIMESTAMPTZ DEFAULT now(),
+      expires_at TIMESTAMPTZ,
+      revoked BOOLEAN DEFAULT FALSE
+    );
+
+	CREATE TABLE IF NOT EXISTS assets (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    path TEXT NOT NULL,
+    size BIGINT NOT NULL,
+    mime TEXT NOT NULL,
+    hash TEXT NOT NULL,
+    taken_at TIMESTAMP WITH TIME ZONE,
+    storage_key TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_sessions_refresh_hash ON sessions(refresh_token_hash);
+    `
+    if _, err := p.DB.Exec(schema); err != nil {
+        return fmt.Errorf("migrate: %w", err)
+    }
+    return nil
 }

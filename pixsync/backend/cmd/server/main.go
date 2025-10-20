@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"time"
 
+	"backend/internal/api"
 	"backend/internal/config"
 	"backend/internal/db"
 	"backend/internal/storage"
-	"backend/internal/api"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -30,12 +30,16 @@ func main() {
 	}
 	defer pg.Close()
 
+	// === Run migrations ===
+	if err := pg.Migrate(); err != nil {
+		log.Fatalf("migration failed: %v", err)
+	}
+
 	// === Initialize storage backend (local or minio) ===
 	store, err := storage.New(cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize storage: %v", err)
 	}
-	_= store
 
 	// === Setup router ===
 	r := chi.NewRouter()
@@ -44,14 +48,10 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Health check route
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
-
+	// === Register all API routes ===
 	api.RegisterRoutes(r, pg, store, cfg)
 
+	// === Start HTTP server ===
 	addr := fmt.Sprintf("%s:%s", cfg.AppHost, cfg.AppPort)
 	srv := &http.Server{
 		Addr:         addr,
@@ -61,7 +61,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// === Start server in background ===
+	// === Run server in background ===
 	go func() {
 		fmt.Printf("PixSync server running on %s\n", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

@@ -40,3 +40,14 @@ func (p *Postgres) Close() {
 		p.DB.Close()
 	}
 }
+
+func (p *Postgres) CreateAsset(userID int64, filename string, path string, size int64, mime, hash string, takenAt *time.Time, storageKey string) (int64, error) {
+    var id int64
+    query := `
+        INSERT INTO assets (user_id, filename, path, size, mime, hash, taken_at, storage_key)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING id
+    `
+    err := p.DB.QueryRow(query, userID, filename, path, size, mime, hash, takenAt, storageKey).Scan(&id)
+    return id, err
+}
