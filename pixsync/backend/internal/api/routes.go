@@ -30,4 +30,10 @@ func RegisterRoutes(r chi.Router, pg *db.Postgres, store storage.Storage, cfg *c
 	r.Post("/auth/login", LoginHandler(pg))
 	r.Post("/auth/refresh", RefreshHandler(pg))
 	r.Post("/auth/logout", LogoutHandler(pg))
+
+	r.Group(func(protected chi.Router) {
+		protected.Use(JWTMiddleware)
+		protected.Post("/upload", UploadHandler(pg, store))
+		protected.Get("/restore", RestoreHandler(pg, store))
+	})
 }

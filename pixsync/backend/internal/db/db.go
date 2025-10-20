@@ -13,6 +13,19 @@ type Postgres struct {
 	DB *sql.DB
 }
 
+type Asset struct {
+    ID         int64
+    UserID     int64
+    Filename   string
+    Path       string
+    Size       int64
+    Mime       string
+    Hash       string
+    TakenAt    *time.Time
+    StorageKey string
+    CreatedAt  time.Time
+}
+
 // NewPostgres creates and opens a PostgreSQL connection
 func NewPostgres(url string) (*Postgres, error) {
 	var err error
@@ -50,4 +63,16 @@ func (p *Postgres) CreateAsset(userID int64, filename string, path string, size 
     `
     err := p.DB.QueryRow(query, userID, filename, path, size, mime, hash, takenAt, storageKey).Scan(&id)
     return id, err
+}
+
+func (p *Postgres) GetAsset(userID, assetID int64) (*Asset, error) {
+	a := &Asset{}
+	query := `SELECT id, filename, path, size, mime, hash, taken_at, storage_key, created_at
+	          FROM assets WHERE id=$1 AND user_id=$2`
+	row := p.DB.QueryRow(query, assetID, userID)
+	err := row.Scan(&a.ID, &a.Filename, &a.Path, &a.Size, &a.Mime, &a.Hash, &a.TakenAt, &a.StorageKey, &a.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
 }
