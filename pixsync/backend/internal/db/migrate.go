@@ -40,7 +40,20 @@ func (p *Postgres) Migrate() error {
     taken_at TIMESTAMP WITH TIME ZONE,
     storage_key TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
+  );
+
+  CREATE TABLE IF NOT EXISTS uploads (
+      id TEXT PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      filename TEXT NOT NULL,
+      temp_path TEXT NOT NULL,
+      total_size BIGINT NOT NULL,
+      uploaded_offset BIGINT DEFAULT 0,
+      completed BOOLEAN DEFAULT FALSE,
+      mime TEXT,
+      taken_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  );
 
 
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
