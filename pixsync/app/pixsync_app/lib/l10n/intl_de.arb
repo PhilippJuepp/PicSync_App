@@ -3,5 +3,21 @@
   "welcomeTitle": "Willkommen!",
   "welcomeSubtitle": "Gib deine Zugangsdaten zu deinem PixSync-Konto ein",
   "signUp": "Registrieren",
-  "signIn": "Anmelden"
-}
+  "signIn": "Anmelden",
+
+  "getStarted": "Registrieren",
+  "fullName": "Vollständiger Name",
+  "email": "E-Mail",
+  "password": "Passwort",
+  "confirmPassword": "Passwort bestätigen",
+  "agreePersonalData": "Ich stimme der Verarbeitung meiner persönlichen Daten zu",
+  "alreadyHaveAccount": "Du hast bereits ein Konto?",
+  "fieldRequired": "Dieses Feld wird benötigt",
+  "back": "Zurück",
+  "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+
+  "emailOrUsername": "E-Mail oder Benutzername",
+  "rememberMe": "Angemeldet bleiben",
+  "forgotPassword": "Passwort vergessen?",
+  "noAccount": "Du hast noch kein Konto?"
+  }

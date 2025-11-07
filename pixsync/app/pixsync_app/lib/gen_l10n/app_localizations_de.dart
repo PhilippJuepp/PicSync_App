@@ -20,4 +20,47 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get signIn => 'Anmelden';
+
+  @override
+  String get getStarted => 'Registrieren';
+
+  @override
+  String get fullName => 'Vollständiger Name';
+
+  @override
+  String get email => 'E-Mail';
+
+  @override
+  String get password => 'Passwort';
+
+  @override
+  String get confirmPassword => 'Passwort bestätigen';
+
+  @override
+  String get agreePersonalData =>
+      'Ich stimme der Verarbeitung meiner persönlichen Daten zu';
+
+  @override
+  String get alreadyHaveAccount => 'Du hast bereits ein Konto?';
+
+  @override
+  String get fieldRequired => 'Dieses Feld wird benötigt';
+
+  @override
+  String get back => 'Zurück';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwörter stimmen nicht überein';
+
+  @override
+  String get emailOrUsername => 'E-Mail oder Benutzername';
+
+  @override
+  String get rememberMe => 'Angemeldet bleiben';
+
+  @override
+  String get forgotPassword => 'Passwort vergessen?';
+
+  @override
+  String get noAccount => 'Du hast noch kein Konto?';
 }
