@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../gen_l10n/app_localizations.dart';
 import 'login_screen.dart';
 import '../../core/widgets/auth_background_wrapper.dart';
+import '../../core/services/api_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -45,6 +47,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _registerUser() async {
+    if (!mounted) return;
+
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final response = await ApiClient.post('/auth/register', {
+        'name': name,
+        'email': email,
+        'password': password,
+      });
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.registrationSuccess)),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('seenWelcome', true);
+
+      _navigateFadeReplacement(context, const LoginScreen());
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.registrationFailed}: $e'),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -156,7 +201,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 onPressed: () {
                                   FocusScope.of(context).unfocus();
                                   if (_formKey.currentState!.validate()) {
-                                    // TODO: Registration logic
+                                    _registerUser();
                                   }
                                 },
                                 child: Text(

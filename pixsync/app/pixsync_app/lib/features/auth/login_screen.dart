@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../gen_l10n/app_localizations.dart';
 import 'register_screen.dart';
 import '../../core/widgets/auth_background_wrapper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/api_client.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
 
   final FocusScopeNode _focusScope = FocusScopeNode();
 
@@ -43,6 +45,60 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  Future<void> _loginUser() async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+
+  try {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final response = await ApiClient.post('/auth/login', {
+      'email': email,
+      'password': password,
+    });
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
+
+    print('LOGIN RESPONSE: $response');
+
+    // save tokens from API response
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = response['access_token'] ?? '';
+    final refreshToken = response['refresh_token'] ?? '';
+
+    if (accessToken.isEmpty || refreshToken.isEmpty) {
+      throw Exception('Invalid response from server');
+    }
+    await prefs.setString('accessToken', accessToken);
+    await prefs.setString('refreshToken', refreshToken);
+
+    final user = response['user'];
+      if (user != null) {
+        await prefs.setString('userEmail', user['email']);
+        await prefs.setString('userId', user['id'].toString());
+      }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context)!.loginSuccess)),
+    );
+
+    _navigateFadeReplacement(context, const HomeScreen());
+
+  } catch (e) {
+    if (mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${AppLocalizations.of(context)!.loginFailed}: $e")),
+      );
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -124,24 +180,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 12),
 
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: _rememberMe,
-                                      activeColor: Colors.white,
-                                      checkColor: Colors.blueAccent,
-                                      onChanged: (value) {
-                                        setState(() => _rememberMe = value ?? false);
-                                      },
-                                    ),
-                                    Text(
-                                      AppLocalizations.of(context)!.rememberMe,
-                                      style: const TextStyle(color: Colors.white70),
-                                    ),
-                                  ],
-                                ),
                                 InkWell(
                                   borderRadius: BorderRadius.circular(6),
                                   splashColor: Colors.white24,
@@ -176,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () {
                                 FocusScope.of(context).unfocus();
                                 if (_formKey.currentState!.validate()) {
-                                  // TODO: Login logic
+                                  _loginUser();
                                 }
                               },
                               child: Text(

@@ -16,9 +16,13 @@
       "fieldRequired": "This field is required",
       "back": "Back",
       "passwordsDoNotMatch": "Passwords do not match",
+      "registrationSuccess": "Registration successful!",
+      "registrationFailed": "Registration failed",
 
       "emailOrUsername": "Email or Username",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
-      "noAccount": "Don't have an account?"
+      "noAccount": "Don't have an account?",
+      "loginSuccess": "Login successful!",
+      "loginFailed": "Login failed"
 }

@@ -4,9 +4,27 @@ import 'gen_l10n/app_localizations.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'core/theme/light_theme.dart';
 import 'core/theme/dark_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'features/auth/login_screen.dart';
+import 'features/home/home_screen.dart';
+import 'main.dart';
 
 class PixSyncApp extends StatelessWidget {
   const PixSyncApp({super.key});
+
+Future<Widget> _getStartScreen() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('accessToken');
+  final seenWelcome = prefs.getBool('seenWelcome') ?? false;
+
+  if (!seenWelcome) {
+    return const WelcomeScreen();
+  } else if (token != null && token.isNotEmpty) {
+    return const HomeScreen();
+  } else {
+    return const LoginScreen();
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +45,17 @@ class PixSyncApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      home: const WelcomeScreen(),
+      home: FutureBuilder<Widget>(
+        future: getStartScreen(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return snapshot.data!;
+        },
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import '../../gen_l10n/app_localizations.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import '../../core/widgets/auth_background_wrapper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -77,7 +78,9 @@ void _navigateAdaptive(BuildContext context, Widget page) {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('seenWelcome', true); 
                             _navigateAdaptive(context, const RegisterScreen());
                           },
                           child: Text(AppLocalizations.of(context)!.signUp),
@@ -95,7 +98,9 @@ void _navigateAdaptive(BuildContext context, Widget page) {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('seenWelcome', true);
                             _navigateAdaptive(context, const LoginScreen());
                           },
                           child: Text(AppLocalizations.of(context)!.signIn),

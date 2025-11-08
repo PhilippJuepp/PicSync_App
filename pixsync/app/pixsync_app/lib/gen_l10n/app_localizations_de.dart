@@ -53,6 +53,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get passwordsDoNotMatch => 'Passwörter stimmen nicht überein';
 
   @override
+  String get registrationSuccess => 'Registrierung erfolgreich!';
+
+  @override
+  String get registrationFailed => 'Registrierung fehlgeschlagen';
+
+  @override
   String get emailOrUsername => 'E-Mail oder Benutzername';
 
   @override
@@ -63,4 +69,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noAccount => 'Du hast noch kein Konto?';
+
+  @override
+  String get loginSuccess => 'Login erfolgreich!';
+
+  @override
+  String get loginFailed => 'Login fehlgeschlagen';
 }

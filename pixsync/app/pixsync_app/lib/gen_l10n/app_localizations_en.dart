@@ -52,6 +52,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordsDoNotMatch => 'Passwords do not match';
 
   @override
+  String get registrationSuccess => 'Registration successful!';
+
+  @override
+  String get registrationFailed => 'Registration failed';
+
+  @override
   String get emailOrUsername => 'Email or Username';
 
   @override
@@ -62,4 +68,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noAccount => 'Don\'t have an account?';
+
+  @override
+  String get loginSuccess => 'Login successful!';
+
+  @override
+  String get loginFailed => 'Login failed';
 }

@@ -15,9 +15,14 @@
   "fieldRequired": "Dieses Feld wird benötigt",
   "back": "Zurück",
   "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+  "registrationSuccess": "Registrierung erfolgreich!",
+  "registrationFailed": "Registrierung fehlgeschlagen",
+
 
   "emailOrUsername": "E-Mail oder Benutzername",
   "rememberMe": "Angemeldet bleiben",
   "forgotPassword": "Passwort vergessen?",
-  "noAccount": "Du hast noch kein Konto?"
+  "noAccount": "Du hast noch kein Konto?",
+  "loginSuccess": "Login erfolgreich!",
+  "loginFailed": "Login fehlgeschlagen"
   }
