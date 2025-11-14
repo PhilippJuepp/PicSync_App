@@ -25,7 +25,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get getStarted => 'Registrieren';
 
   @override
-  String get fullName => 'Vollständiger Name';
+  String get fullName => 'Name';
 
   @override
   String get email => 'E-Mail';
@@ -75,4 +75,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get loginFailed => 'Login fehlgeschlagen';
+
+  @override
+  String get invalidCredentials => 'Ungültige Zugangsdaten';
+
+  @override
+  String get emailOrUserExists => 'E-Mail oder Benutzername bereits vergeben';
+
+  @override
+  String get invalidInput => 'Ungültige Eingabe';
 }

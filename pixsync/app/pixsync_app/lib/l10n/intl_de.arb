@@ -6,7 +6,7 @@
   "signIn": "Anmelden",
 
   "getStarted": "Registrieren",
-  "fullName": "Vollständiger Name",
+  "fullName": "Name",
   "email": "E-Mail",
   "password": "Passwort",
   "confirmPassword": "Passwort bestätigen",
@@ -24,5 +24,8 @@
   "forgotPassword": "Passwort vergessen?",
   "noAccount": "Du hast noch kein Konto?",
   "loginSuccess": "Login erfolgreich!",
-  "loginFailed": "Login fehlgeschlagen"
+  "loginFailed": "Login fehlgeschlagen",
+  "invalidCredentials": "Ungültige Zugangsdaten",
+  "emailOrUserExists": "E-Mail oder Benutzername bereits vergeben",
+  "invalidInput": "Ungültige Eingabe"
   }

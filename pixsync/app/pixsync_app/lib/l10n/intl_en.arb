@@ -7,7 +7,7 @@
       "signIn": "Sign in",
 
       "getStarted": "Get Started",
-      "fullName": "Full Name",
+      "fullName": "Name",
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm Password",
@@ -24,5 +24,8 @@
       "forgotPassword": "Forgot password?",
       "noAccount": "Don't have an account?",
       "loginSuccess": "Login successful!",
-      "loginFailed": "Login failed"
+      "loginFailed": "Login failed",
+      "invalidCredentials": "Invalid login details",
+      "emailOrUserExists": "Email adress or username already exists",
+      "invalidInput": "Invalid input"
 }

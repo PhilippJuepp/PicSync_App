@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final TextEditingController _identifierController = TextEditingController();
 
   final FocusScopeNode _focusScope = FocusScopeNode();
 
@@ -46,8 +47,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _loginUser() async {
-  final email = _emailController.text.trim();
+Future<void> _loginUser() async {
+  final identifier = _emailController.text
+    .trim()
+    .toLowerCase()
+    .replaceAll(RegExp(r'\u200B'), '');
   final password = _passwordController.text.trim();
 
   try {
@@ -56,37 +60,26 @@ class _LoginScreenState extends State<LoginScreen> {
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+    
+    print("Login attempt with identifier: '$identifier' and password: '${_passwordController.text}'");
 
     final response = await ApiClient.post('/auth/login', {
-      'email': email,
+      'identifier': identifier,
       'password': password,
     });
 
     if (!mounted) return;
     Navigator.of(context).pop();
 
-    print('LOGIN RESPONSE: $response');
-
-    // save tokens from API response
     final prefs = await SharedPreferences.getInstance();
-    final accessToken = response['access_token'] ?? '';
-    final refreshToken = response['refresh_token'] ?? '';
-
-    if (accessToken.isEmpty || refreshToken.isEmpty) {
-      throw Exception('Invalid response from server');
-    }
-    await prefs.setString('accessToken', accessToken);
-    await prefs.setString('refreshToken', refreshToken);
+    await prefs.setString('accessToken', response['access_token']);
+    await prefs.setString('refreshToken', response['refresh_token']);
 
     final user = response['user'];
-      if (user != null) {
-        await prefs.setString('userEmail', user['email']);
-        await prefs.setString('userId', user['id'].toString());
-      }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.loginSuccess)),
-    );
+    if (user != null) {
+      await prefs.setString('userEmail', user['email']);
+      await prefs.setString('userId', user['id'].toString());
+    }
 
     _navigateFadeReplacement(context, const HomeScreen());
 
@@ -94,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${AppLocalizations.of(context)!.loginFailed}: $e")),
+        SnackBar(content: Text(AppLocalizations.of(context)!.invalidCredentials)),
       );
     }
   }

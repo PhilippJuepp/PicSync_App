@@ -4,62 +4,91 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+  "strings"
 
 	"backend/internal/db"
 	"backend/internal/auth"
 )
 
 type registerReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+    Name     string `json:"name"`
+    Email    string `json:"email"`
+    Password string `json:"password"`
 }
 
 type loginReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+    Identifier string `json:"identifier"`
+    Password   string `json:"password"`
 }
 
 func RegisterHandler(pg *db.Postgres) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var rq registerReq
-		if err := json.NewDecoder(r.Body).Decode(&rq); err != nil {
-			http.Error(w, "bad request", http.StatusBadRequest); return
-		}
-		if rq.Email == "" || rq.Password == "" {
-			http.Error(w, "missing fields", http.StatusBadRequest); return
-		}
-		// check exists
-		existing, _ := pg.GetUserByEmail(rq.Email)
-		if existing != nil {
-			http.Error(w, "email already used", http.StatusConflict); return
-		}
-		pwHash, _ := auth.HashPassword(rq.Password)
-		id, err := pg.CreateUser(rq.Email, pwHash)
-		if err != nil {
-			http.Error(w, "server error", http.StatusInternalServerError); return
-		}
-		json.NewEncoder(w).Encode(map[string]any{"id": id})
-	}
+    return func(w http.ResponseWriter, r *http.Request) {
+        var rq registerReq
+        if err := json.NewDecoder(r.Body).Decode(&rq); err != nil {
+            http.Error(w, "bad request", http.StatusBadRequest)
+            return
+        }
+
+        rq.Name = strings.TrimSpace(rq.Name)
+        rq.Email = strings.TrimSpace(strings.ToLower(rq.Email))
+        rq.Password = strings.TrimSpace(rq.Password)
+
+        if rq.Email == "" || rq.Password == "" || rq.Name == "" {
+            http.Error(w, "missing fields", http.StatusBadRequest)
+            return
+        }
+
+        if u, _ := pg.GetUserByEmail(rq.Email); u != nil {
+            http.Error(w, "email already used", http.StatusConflict)
+            return
+        }
+        if u, _ := pg.GetUserByName(rq.Name); u != nil {
+            http.Error(w, "name already used", http.StatusConflict)
+            return
+        }
+
+        pwHash, _ := auth.HashPassword(rq.Password)
+        id, err := pg.CreateUser(rq.Name, rq.Email, pwHash)
+        if err != nil {
+            http.Error(w, "server error", http.StatusInternalServerError)
+            return
+        }
+
+        json.NewEncoder(w).Encode(map[string]any{"id": id})
+    }
 }
 
 func LoginHandler(pg *db.Postgres) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var rq loginReq
-		if err := json.NewDecoder(r.Body).Decode(&rq); err != nil {
-			http.Error(w, "bad request", http.StatusBadRequest)
-			return
-		}
+    return func(w http.ResponseWriter, r *http.Request) {
+        var rq loginReq
+        if err := json.NewDecoder(r.Body).Decode(&rq); err != nil {
+            http.Error(w, "bad request", http.StatusBadRequest)
+            return
+        }
 
-		u, err := pg.GetUserByEmail(rq.Email)
-		if err != nil || u == nil {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
+        rq.Identifier = strings.TrimSpace(strings.ToLower(rq.Identifier))
+        rq.Password = strings.TrimSpace(rq.Password)
 
-		if !auth.CheckPasswordHash(u.PasswordHash, rq.Password) {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
+        identifier := rq.Identifier
+        
+ 		    var u *db.User
+        var err error
+
+        if strings.Contains(identifier, "@") {
+            u, err = pg.GetUserByEmail(identifier)
+        } else {
+            u, err = pg.GetUserByName(identifier)
+        }
+
+        if err != nil || u == nil {
+            http.Error(w, "unauthorized", http.StatusUnauthorized)
+            return
+        }
+
+        if !auth.CheckPasswordHash(u.PasswordHash, rq.Password) {
+            http.Error(w, "unauthorized", http.StatusUnauthorized)
+            return
+        }
 
 		// access token
 		accessToken, err := auth.NewToken(u.ID, 15*time.Minute)
@@ -98,6 +127,11 @@ func LoginHandler(pg *db.Postgres) http.HandlerFunc {
 			"refresh_token":      refreshPlain,
 			"refresh_expires_in": 30 * 24 * 60 * 60,
 			"session_id":         sessionID,
+          "user": map[string]any{
+          "id": u.ID,
+          "email": u.Email,
+          "name": u.Name,
+      },
 		})
 	}
 }
@@ -125,11 +159,12 @@ func RefreshHandler(pg *db.Postgres) http.HandlerFunc {
     if err != nil { http.Error(w,"server error",500); return }
 
     json.NewEncoder(w).Encode(map[string]any{
-      "access_token": accessToken,
-      "access_expires_in": 15*60,
-      "refresh_token": newRefresh,
-      "refresh_expires_in": 30*24*60*60,
-      "session_id": sessionID,
+		"access_token": accessToken,
+		"access_expires_in": 15*60,
+		"refresh_token": newRefresh,
+		"refresh_expires_in": 30*24*60*60,
+		"session_id": sessionID,
+		"user_id": userID,
     })
   }
 }

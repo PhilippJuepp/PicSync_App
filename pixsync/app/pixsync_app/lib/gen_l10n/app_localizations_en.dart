@@ -25,7 +25,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get Started';
 
   @override
-  String get fullName => 'Full Name';
+  String get fullName => 'Name';
 
   @override
   String get email => 'Email';
@@ -74,4 +74,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginFailed => 'Login failed';
+
+  @override
+  String get invalidCredentials => 'Invalid login details';
+
+  @override
+  String get emailOrUserExists => 'Email adress or username already exists';
+
+  @override
+  String get invalidInput => 'Invalid input';
 }

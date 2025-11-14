@@ -131,7 +131,7 @@ abstract class AppLocalizations {
   /// No description provided for @fullName.
   ///
   /// In en, this message translates to:
-  /// **'Full Name'**
+  /// **'Name'**
   String get fullName;
 
   /// No description provided for @email.
@@ -229,6 +229,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Login failed'**
   String get loginFailed;
+
+  /// No description provided for @invalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid login details'**
+  String get invalidCredentials;
+
+  /// No description provided for @emailOrUserExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Email adress or username already exists'**
+  String get emailOrUserExists;
+
+  /// No description provided for @invalidInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid input'**
+  String get invalidInput;
 }
 
 class _AppLocalizationsDelegate
