@@ -1,0 +1,37 @@
+{
+  "@@locale": "en",
+
+      "welcomeTitle": "Welcome!",
+      "welcomeSubtitle": "Enter personal details to your PicSync-account",
+      "signUp": "Sign up",
+      "signIn": "Sign in",
+
+      "getStarted": "Get Started",
+      "fullName": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "agreePersonalData": "I agree to the processing of personal data",
+      "alreadyHaveAccount": "Already have an account?",
+      "fieldRequired": "This field is required",
+      "back": "Back",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "registrationSuccess": "Registration successful!",
+      "registrationFailed": "Registration failed",
+
+      "emailOrUsername": "Email or Username",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "loginSuccess": "Login successful!",
+      "loginFailed": "Login failed",
+      "invalidCredentials": "Invalid login details",
+      "emailOrUserExists": "Email adress or username already exists",
+      "invalidInput": "Invalid input",
+
+      "connectServer": "Connect to Server",
+      "serverConnectionHint": "Enter server address (IP, domain or URL)",
+      "connect": "Connect",
+      "connectionFailed": "Could not connect to server",
+      "invalidUrl": "Invalid URL"
+}
