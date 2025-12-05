@@ -33,5 +33,11 @@
       "serverConnectionHint": "Enter server address (IP, domain or URL)",
       "connect": "Connect",
       "connectionFailed": "Could not connect to server",
-      "invalidUrl": "Invalid URL"
+      "invalidUrl": "Invalid URL",
+
+      "library": "Library",
+      "backup": "Backup",
+      "settings": "Settings",
+      "refresh": "Refresh",
+      "no_media_found": "No media found"
 }

@@ -9,7 +9,7 @@ class ApiClient {
     return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
   }
 
-  static Future<Map<String, String>> _getHeaders() async {
+  static Future<Map<String, String>> getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('accessToken');
     final headers = {'Content-Type': 'application/json'};
@@ -23,7 +23,7 @@ class ApiClient {
     final baseUrl = await getBaseUrl();
     final safePath = path.startsWith('/') ? path : '/$path';
     final url = Uri.parse('$baseUrl$safePath');
-    final headers = await _getHeaders();
+    final headers = await getHeaders();
 
     final response = await http.post(
       url,

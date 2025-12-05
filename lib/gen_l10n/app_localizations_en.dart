@@ -98,4 +98,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidUrl => 'Invalid URL';
+
+  @override
+  String get library => 'Library';
+
+  @override
+  String get backup => 'Backup';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get no_media_found => 'No media found';
 }

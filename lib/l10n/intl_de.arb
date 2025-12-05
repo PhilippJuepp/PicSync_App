@@ -33,5 +33,11 @@
   "serverConnectionHint": "Server-Adresse eingeben (IP, Domain oder URL)",
   "connect": "Verbinden",
   "connectionFailed": "Verbindung zum Server fehlgeschlagen",
-  "invalidUrl": "Ungültige URL"
+  "invalidUrl": "Ungültige URL",
+
+  "library": "Gallerie",
+  "backup": "Backup",
+  "settings": "Einstellungen",
+  "refresh": "Aktualisieren",
+  "no_media_found": "Keine Medien gefunden"
   }

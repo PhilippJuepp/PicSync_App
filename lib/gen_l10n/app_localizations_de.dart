@@ -100,4 +100,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get invalidUrl => 'Ungültige URL';
+
+  @override
+  String get library => 'Gallerie';
+
+  @override
+  String get backup => 'Backup';
+
+  @override
+  String get settings => 'Einstellungen';
+
+  @override
+  String get refresh => 'Aktualisieren';
+
+  @override
+  String get no_media_found => 'Keine Medien gefunden';
 }

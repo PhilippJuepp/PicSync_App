@@ -277,6 +277,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid URL'**
   String get invalidUrl;
+
+  /// No description provided for @library.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get library;
+
+  /// No description provided for @backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backup;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @no_media_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No media found'**
+  String get no_media_found;
 }
 
 class _AppLocalizationsDelegate

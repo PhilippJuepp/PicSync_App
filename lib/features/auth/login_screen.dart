@@ -4,7 +4,7 @@ import 'register_screen.dart';
 import '../../core/widgets/auth_background_wrapper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/api_client.dart';
-import '../home/home_screen.dart';
+import '../home/home_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      _navigateFadeReplacement(context, const HomeScreen());
+      _navigateFadeReplacement(context, const HomeShell());
 
     } catch (e) {
       if (mounted) {

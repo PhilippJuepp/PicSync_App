@@ -3,7 +3,7 @@ import 'app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/auth/login_screen.dart';
-import 'features/home/home_screen.dart';
+import 'features/home/home_shell.dart';
 import 'features/server_conncection/server_connection_screen.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,7 +18,7 @@ Future<Widget> getStartScreen() async {
   final serverUrl = prefs.getString('serverUrl');
   final seenWelcome = prefs.getBool('seenWelcome') ?? false;
   final token = prefs.getString('accessToken');
-
+// 
   if (serverUrl == null || serverUrl.isEmpty) {
     return const ServerConnectionScreen();
   }
@@ -33,7 +33,7 @@ Future<Widget> getStartScreen() async {
   }
 
   if (token != null && token.isNotEmpty) {
-    return const HomeScreen();
+    return const HomeShell();
   }
 
   return const LoginScreen();
