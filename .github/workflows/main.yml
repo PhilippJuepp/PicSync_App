@@ -1,0 +1,88 @@
+name: Build Flutter App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.4"
+
+      - name: Disable analytics
+        run: flutter config --no-analytics
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
+
+      - name: Create tag if missing
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG exists"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Delete release if exists
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          RELEASE_ID=$(gh release view "$TAG" --json id -q ".id" || echo "")
+          if [ "$RELEASE_ID" != "" ]; then
+            gh release delete "$TAG" -y
+          fi
+
+      - name: Create fresh release
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          gh release create "$TAG" --title "Picsync $TAG"
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Rename Android Build
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Picsync-${{ steps.version.outputs.version }}.apk
+
+      - name: Build iOS unsigned
+        run: flutter build ios --release --no-codesign
+
+      - name: Create IPA
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r Picsync-${{ steps.version.outputs.version }}.ipa Payload
+
+      - name: Upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          gh release upload "$TAG" \
+            build/app/outputs/flutter-apk/Picsync-${{ steps.version.outputs.version }}.apk \
+            build/ios/ipa/Picsync-${{ steps.version.outputs.version }}.ipa
