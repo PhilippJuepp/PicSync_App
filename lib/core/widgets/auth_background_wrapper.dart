@@ -15,8 +15,8 @@ class AuthBackgroundWrapper extends StatelessWidget {
         Positioned.fill(
           child: SvgPicture.asset(
             isDark
-                ? 'assets/images/welcome_background_dark.svg'
-                : 'assets/images/welcome_background_light.svg',
+                ? 'assets/images/welcome_screen/welcome_background_dark.svg'
+                : 'assets/images/welcome_screen/welcome_background_light.svg',
             fit: BoxFit.cover,
           ),
         ),

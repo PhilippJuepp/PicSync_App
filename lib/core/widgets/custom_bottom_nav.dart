@@ -20,9 +20,10 @@ class CustomBottomNav extends StatelessWidget {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = theme.colorScheme.surface.withOpacity(isDark ? 0.85 : 0.96);
-    final shadowColor = isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.08);
-
+    final bgColor = theme.colorScheme.surface.withAlpha((isDark ? 0.85 : 0.96 * 255).round());
+    final shadowColor = isDark 
+        ? Colors.black.withAlpha((0.6 * 255).round()) 
+        : Colors.black.withAlpha((0.08 * 255).round());
     return SafeArea(
       bottom: true,
       child: Padding(
@@ -52,8 +53,8 @@ class CustomBottomNav extends StatelessWidget {
                       label: it.label,
                       icon: it.icon,
                       active: active,
-                      iconColor: iconColor!,
-                      textColor: textColor!,
+                      iconColor: iconColor,
+                      textColor: textColor,
                       onTap: () => onTap(i),
                     ),
                   );
@@ -90,13 +91,13 @@ class _NavButton extends StatelessWidget {
       containedInkWell: true,
       borderRadius: BorderRadius.circular(15),
       splashFactory: InkRipple.splashFactory,
-      splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-      highlightColor: Colors.transparent, // Entfernt grauen InkWell-Overlay
+      splashColor: Theme.of(context).colorScheme.primary.withAlpha((0.25 * 255).round()),
+      highlightColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          color: active ? iconColor.withOpacity(0.08) : Colors.transparent,
+          color: active ? iconColor.withAlpha((0.08 * 255).round()) : Colors.transparent,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

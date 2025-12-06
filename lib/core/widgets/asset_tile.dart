@@ -28,7 +28,6 @@ class AssetTile extends StatelessWidget {
                 child: const Center(child: Icon(Icons.broken_image, size: 36)),
               ),
             ),
-            // subtle overlay for readability of year label
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -47,7 +46,9 @@ class AssetTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.black87.withOpacity(0.6) : Colors.white70,
+                  color: isDark
+                    ? Colors.black87.withAlpha((0.6 * 255).round())
+                    : Colors.white70.withAlpha((0.7 * 255).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

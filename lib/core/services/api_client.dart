@@ -46,4 +46,62 @@ class ApiClient {
       return false;
     }
   }
+
+  static Future<Map<String, dynamic>> postBytes(
+    String path, {
+    required Map<String, String> query,
+    required List<int> body,
+    int timeoutSeconds = 20,
+  }) async {
+    final baseUrl = await getBaseUrl();
+    final safePath = path.startsWith('/') ? path : '/$path';
+
+    final url = Uri.parse('$baseUrl$safePath').replace(queryParameters: query);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
+
+    final headers = {
+      'Content-Type': 'application/octet-stream',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .post(
+          url,
+          headers: headers,
+          body: body,
+        )
+        .timeout(Duration(seconds: timeoutSeconds));
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return {};
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception(
+          'Bytes upload failed (${response.statusCode}): ${response.body}');
+    }
+  }
+
+  static Future<void> refreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString('refreshToken');
+    if (refreshToken == null) throw Exception("No refresh token stored");
+
+    final baseUrl = await getBaseUrl();
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/refresh'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refresh_token': refreshToken}),
+    );
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final body = jsonDecode(res.body);
+      await prefs.setString('accessToken', body['access_token']);
+      if (body['refresh_token'] != null) {
+        await prefs.setString('refreshToken', body['refresh_token']);
+      }
+    } else {
+      throw Exception('Refresh token failed: ${res.body}');
+    }
+  }
 }
