@@ -52,7 +52,7 @@ class UploadWorker {
 
       raf.closeSync();
 
-      await ApiClient.post('/upload/complete', {'id': uploadId});
+      await ApiClient.post('/upload/complete?id=$uploadId', {});
     }
 
     try {
