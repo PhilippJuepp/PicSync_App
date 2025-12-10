@@ -47,4 +47,5 @@ Future<bool> _checkServerHealth(String base) async {
   } catch (_) {
     return false;
   }
+  //*
 }

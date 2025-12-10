@@ -1,9 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../gen_l10n/app_localizations.dart';
 import '../../core/widgets/auth_background_wrapper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/welcome_screen.dart';
-import '../../core/services/api_client.dart';
+import 'package:http/http.dart' as http;
 
 class ServerConnectionScreen extends StatefulWidget {
   const ServerConnectionScreen({super.key});
@@ -31,15 +32,16 @@ String _normalize(String input) {
     out = 'http://$out';
   }
 
-  final uri = Uri.parse(out);
+  Uri? uri = Uri.tryParse(out);
 
-  final cleanedPath = uri.path.replaceAll(RegExp(r'/{2,}'), '/');
+  if (uri == null || uri.host.isEmpty) {
+    throw Exception("Invalid server URL");
+  }
 
   out = Uri(
     scheme: uri.scheme,
     host: uri.host,
-    port: uri.port,
-    path: cleanedPath,
+    port: uri.hasPort ? uri.port : null,
   ).toString();
 
   if (out.endsWith('/')) {
@@ -59,35 +61,36 @@ String _normalize(String input) {
 
     try {
       final url = _normalize(serverInput);
-      
-      //Healthcheck
+
+      // Healthcheck
       final testUrl = Uri.parse('$url/health');
 
-      final response = await ApiClient.testConnection(testUrl);
-      if (response) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('serverUrl', url);
+      final res = await http.get(testUrl).timeout(const Duration(seconds: 5));
 
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) => const WelcomeScreen(),
-            transitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder: (_, animation, _, child) {
-              return FadeTransition(
-                opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-                child: child,
-              );
-            },
-          ),
-        );
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.connectionFailed)),
-          );
-        }
+      if (res.statusCode != 200) {
+        throw Exception("Server not reachable");
       }
+
+      final body = jsonDecode(res.body);
+      if (body['status'] != 'ok') {
+        throw Exception("Healthcheck failed");
+      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('serverUrl', url);
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, _, _) => const WelcomeScreen(),
+          transitionDuration: const Duration(milliseconds: 250),
+          transitionsBuilder: (_, animation, _, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+              child: child,
+            );
+          },
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -22,7 +22,7 @@ class _HomeShellState extends State<HomeShell> {
     return Scaffold(
       extendBody: true,
       body: SafeArea(child: pages[_index]),
-      bottomNavigationBar: CustomBottomNav(index: _index, onTap: _onTab),
+      bottomNavigationBar: AdaptiveNavBar(index: _index, onTap: _onTab),
     );
   }
 }

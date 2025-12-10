@@ -1,66 +1,128 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../gen_l10n/app_localizations.dart';
-import '..//theme/light_theme.dart';
-import '..//theme/dark_theme.dart';
+import '../theme/light_theme.dart';
+import '../theme/dark_theme.dart';
 
-class CustomBottomNav extends StatelessWidget {
+class AdaptiveNavBar extends StatelessWidget {
   final int index;
   final ValueChanged<int> onTap;
-  const CustomBottomNav({super.key, required this.index, required this.onTap});
+  const AdaptiveNavBar({super.key, required this.index, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    return isIOS ? _buildIOS(context) : _buildAndroid(context);
+  }
+
+  Widget _buildIOS(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final items = [
-      _NavItem(icon: Icons.photo_library_rounded, label: loc.library),
-      _NavItem(icon: Icons.cloud_upload_rounded, label: loc.backup),
-      _NavItem(icon: Icons.settings_rounded, label: loc.settings),
+      _NavInfo(label: loc.library, icon: CupertinoIcons.photo_on_rectangle),
+      _NavInfo(label: loc.backup, icon: CupertinoIcons.cloud_upload),
+      _NavInfo(label: loc.settings, icon: CupertinoIcons.settings),
     ];
 
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          padding: EdgeInsets.only(top: 6, bottom: 6 + bottomPadding),
+          decoration: BoxDecoration(
+            color: CupertinoColors.systemGrey6.withValues(alpha: 0.75),
+            border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: List.generate(items.length, (i) {
+              final active = i == index;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(i),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(items[i].icon,
+                          size: active ? 28 : 24,
+                          color: active
+                              ? AppColorsLight.primary
+                              : AppColorsLight.iconInactive),
+                      const SizedBox(height: 2),
+                      Text(items[i].label,
+                          style: TextStyle(
+                            fontSize: active ? 13 : 12,
+                            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                            color: active
+                                ? AppColorsLight.primary
+                                : AppColorsLight.iconInactive,
+                          )),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAndroid(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = theme.colorScheme.surface.withAlpha((isDark ? 0.85 : 0.96 * 255).round());
-    final shadowColor = isDark 
-        ? Colors.black.withAlpha((0.6 * 255).round()) 
-        : Colors.black.withAlpha((0.08 * 255).round());
-    return SafeArea(
-      bottom: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Material(
-              color: bgColor,
-              elevation: 6,
-              shadowColor: shadowColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(items.length, (i) {
-                  final it = items[i];
-                  final active = i == index;
-                  final iconColor = active
-                      ? theme.colorScheme.primary
-                      : (isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive);
-                  final textColor = active
-                    ? theme.colorScheme.primary
-                    : (isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive);
+    final surfaceColor = isDark ? AppColorsDark.navbar : AppColorsLight.navbar;
 
-                  return Expanded(
-                    child: _NavButton(
-                      label: it.label,
-                      icon: it.icon,
-                      active: active,
-                      iconColor: iconColor,
-                      textColor: textColor,
-                      onTap: () => onTap(i),
-                    ),
-                  );
-                }),
-              ),
+    final items = [
+      NavigationDestination(
+        icon: Icon(Icons.photo_library_outlined, color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
+        selectedIcon: Icon(Icons.photo_library_rounded, color: isDark ? Colors.white70 : AppColorsLight.primary),
+        label: loc.library,
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.cloud_upload_outlined, color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
+        selectedIcon: Icon(Icons.cloud_upload_rounded, color: isDark ? Colors.white70 : AppColorsLight.primary),
+        label: loc.backup,
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.settings_outlined, color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
+        selectedIcon: Icon(Icons.settings_rounded, color: isDark ? Colors.white70 : AppColorsLight.primary),
+        label: loc.settings,
+      ),
+    ];
+
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(14, 0, 14, bottomPadding + 2),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: NavigationBar(
+            height: 56,
+            backgroundColor: surfaceColor.withValues(alpha: 0.95),
+            indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+            selectedIndex: index,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: items,
+            onDestinationSelected: onTap,
           ),
         ),
       ),
@@ -68,60 +130,8 @@ class CustomBottomNav extends StatelessWidget {
   }
 }
 
-class _NavButton extends StatelessWidget {
+class _NavInfo {
   final String label;
   final IconData icon;
-  final bool active;
-  final Color iconColor;
-  final Color textColor;
-  final VoidCallback onTap;
-  const _NavButton({
-    required this.label,
-    required this.icon,
-    required this.active,
-    required this.iconColor,
-    required this.textColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: onTap,
-      containedInkWell: true,
-      borderRadius: BorderRadius.circular(15),
-      splashFactory: InkRipple.splashFactory,
-      splashColor: Theme.of(context).colorScheme.primary.withAlpha((0.25 * 255).round()),
-      highlightColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          color: active ? iconColor.withAlpha((0.08 * 255).round()) : Colors.transparent,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: active ? 26 : 22, color: iconColor),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 220),
-              style: TextStyle(
-                fontSize: active ? 13 : 12,
-                color: textColor,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-              ),
-              child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem {
-  final IconData icon;
-  final String label;
-  _NavItem({required this.icon, required this.label});
+  const _NavInfo({required this.label, required this.icon});
 }
