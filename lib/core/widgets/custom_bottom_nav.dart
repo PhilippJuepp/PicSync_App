@@ -20,6 +20,10 @@ class AdaptiveNavBar extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     final theme = CupertinoTheme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+    final bool isTablet = size.width > 600;
+    final horizontalPadding =
+        isTablet ? ((size.width - 560) / 2.0) : 14.0;
 
     final items = [
       _NavInfo(label: loc.library, icon: CupertinoIcons.photo_on_rectangle),
@@ -31,7 +35,12 @@ class AdaptiveNavBar extends StatelessWidget {
       bottom: true,
       top: false,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          8.0,
+          horizontalPadding,
+          8.0,
+        ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28.0),
           child: BackdropFilter(
@@ -103,6 +112,7 @@ class AdaptiveNavBar extends StatelessWidget {
 
     final items = [
       NavigationDestination(
+        tooltip: '',
         icon: Icon(Icons.photo_library_outlined,
             color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
         selectedIcon: Icon(Icons.photo_library_rounded,
@@ -112,6 +122,7 @@ class AdaptiveNavBar extends StatelessWidget {
         label: loc.library,
       ),
       NavigationDestination(
+        tooltip: '',
         icon: Icon(Icons.cloud_upload_outlined,
             color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
         selectedIcon: Icon(Icons.cloud_upload_rounded,
@@ -121,6 +132,7 @@ class AdaptiveNavBar extends StatelessWidget {
         label: loc.backup,
       ),
       NavigationDestination(
+        tooltip: '',
         icon: Icon(Icons.settings_outlined,
             color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
         selectedIcon: Icon(Icons.settings_rounded,
