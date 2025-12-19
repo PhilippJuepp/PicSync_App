@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/assets_service.dart';
 import '../../core/widgets/gallery_grid.dart';
 import '../../gen_l10n/app_localizations.dart';
+import '../../core/widgets/app_bar.dart';
 
 class AssetDto {
   final String id;
@@ -20,6 +21,7 @@ class AssetDto {
 
 class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
+
   @override
   State<GalleryPage> createState() => _GalleryPageState();
 }
@@ -34,53 +36,39 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   Future<List<AssetDto>> _load() async {
-    try {
-      final raw = await AssetsService.fetchAssets(limit: 300);
-      return raw.map((m) => AssetDto.fromMap(m)).where((a) => a.url.isNotEmpty).toList();
-    } catch (e) {
-      // bubble up error to FutureBuilder
-      rethrow;
-    }
+    final raw = await AssetsService.fetchAssets(limit: 300);
+    return raw
+        .map((m) => AssetDto.fromMap(m))
+        .where((a) => a.url.isNotEmpty)
+        .toList();
   }
 
-  @override
+  void _reload() async {
+    final newFuture = _load();
+    setState(() => _future = newFuture);
+  }
+
+@override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            children: [
-              Text(loc.library, style: Theme.of(context).textTheme.titleLarge),
-              const Spacer(),
-              IconButton(
-                onPressed: () => setState(() => _future = _load()),
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: loc.refresh,
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: FutureBuilder<List<AssetDto>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snap.hasError) {
-                return Center(child: Text('${loc.connectionFailed}: ${snap.error}'));
-              }
-              final assets = snap.data ?? [];
-              if (assets.isEmpty) {
-                return Center(child: Text(loc.no_media_found));
-              }
-              return ZoomableGrid(assets: assets);
-            },
-          ),
-        ),
-      ],
+    return Scaffold(
+      appBar: buildAppBar(title: loc.library, onReload: _reload),
+      body: FutureBuilder<List<AssetDto>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return Center(child: Text('${loc.connectionFailed}: ${snap.error}'));
+          }
+          final assets = snap.data ?? [];
+          if (assets.isEmpty) {
+            return Center(child: Text(loc.no_media_found));
+          }
+          return ZoomableGrid(assets: assets);
+        },
+      ),
     );
   }
 }

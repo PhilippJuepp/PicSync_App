@@ -5,10 +5,11 @@ import 'features/onboarding/welcome_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/home/home_shell.dart';
 import 'features/server_conncection/server_connection_screen.dart';
-import 'package:http/http.dart' as http;
+import 'core/services/connection_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ConnectionService.instance.start();
   final startScreen = await getStartScreen();
   runApp(PicSyncApp(startScreen: startScreen));
 }
@@ -18,13 +19,8 @@ Future<Widget> getStartScreen() async {
   final serverUrl = prefs.getString('serverUrl');
   final seenWelcome = prefs.getBool('seenWelcome') ?? false;
   final token = prefs.getString('accessToken');
-// 
-  if (serverUrl == null || serverUrl.isEmpty) {
-    return const ServerConnectionScreen();
-  }
 
-  final healthy = await _checkServerHealth(serverUrl);
-  if (!healthy) {
+  if (serverUrl == null || serverUrl.isEmpty) {
     return const ServerConnectionScreen();
   }
 
@@ -37,15 +33,4 @@ Future<Widget> getStartScreen() async {
   }
 
   return const LoginScreen();
-}
-
-Future<bool> _checkServerHealth(String base) async {
-  try {
-    final url = Uri.parse(base.endsWith('/') ? '${base}health' : '$base/health');
-    final r = await http.get(url).timeout(const Duration(seconds: 3));
-    return r.statusCode == 200;
-  } catch (_) {
-    return false;
-  }
-  //*
 }

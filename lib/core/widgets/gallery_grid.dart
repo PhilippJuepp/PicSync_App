@@ -25,7 +25,6 @@ class _ZoomableGridState extends State<ZoomableGrid> {
     setState(() {
       _scale *= scaleDelta;
       _scale = _scale.clamp(0.7, 2.0);
-      // map 0.7..2.0 to column counts 2..6 (smooth)
       final mapped = (6 - ((_scale - 0.7) / (2.0 - 0.7) * 4)).round();
       columns = mapped.clamp(2, 6);
     });
@@ -41,7 +40,6 @@ class _ZoomableGridState extends State<ZoomableGrid> {
       },
       child: LayoutBuilder(builder: (context, constraints) {
         final width = constraints.maxWidth;
-        // responsive: adjust baseline columns by width (tablet gets more)
         final isTablet = width > 900;
         final base = isTablet ? 4 : 3;
         final crossAxisCount = (base + (columns - 3)).clamp(2, 6);
@@ -49,7 +47,7 @@ class _ZoomableGridState extends State<ZoomableGrid> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: GridView.builder(
-            key: ValueKey(crossAxisCount), // rebuild when columns change
+            key: ValueKey(crossAxisCount),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 8,

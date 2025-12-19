@@ -18,56 +18,72 @@ class AdaptiveNavBar extends StatelessWidget {
 
   Widget _buildIOS(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final theme = CupertinoTheme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final items = [
       _NavInfo(label: loc.library, icon: CupertinoIcons.photo_on_rectangle),
       _NavInfo(label: loc.backup, icon: CupertinoIcons.cloud_upload),
       _NavInfo(label: loc.settings, icon: CupertinoIcons.settings),
     ];
 
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          padding: EdgeInsets.only(top: 6, bottom: 6 + bottomPadding),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey6.withValues(alpha: 0.75),
-            border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: List.generate(items.length, (i) {
-              final active = i == index;
-              return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(items[i].icon,
-                          size: active ? 28 : 24,
-                          color: active
-                              ? AppColorsLight.primary
-                              : AppColorsLight.iconInactive),
-                      const SizedBox(height: 2),
-                      Text(items[i].label,
-                          style: TextStyle(
-                            fontSize: active ? 13 : 12,
-                            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                            color: active
-                                ? AppColorsLight.primary
-                                : AppColorsLight.iconInactive,
-                          )),
-                    ],
+    return SafeArea(
+      bottom: true,
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24.0, sigmaY: 24.0),
+            child: Container(
+              height: 64.0,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? CupertinoColors.systemGrey6.darkColor.withValues(alpha: 0.75)
+                    : CupertinoColors.systemGrey6.withValues(alpha: 0.75),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                 ),
-              );
-            }),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(items.length, (i) {
+                  final active = i == index;
+                  final color = active
+                      ? AppColorsLight.primary
+                      : AppColorsLight.iconInactive;
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onTap(i),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            items[i].icon,
+                            size: active ? 28.0 : 24.0,
+                            color: color,
+                          ),
+                          const SizedBox(height: 3.0),
+                          Text(
+                            items[i].label,
+                            style: TextStyle(
+                              fontSize: active ? 13.0 : 12.0,
+                              fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                              color: color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),
@@ -80,49 +96,68 @@ class AdaptiveNavBar extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final surfaceColor = isDark ? AppColorsDark.navbar : AppColorsLight.navbar;
 
+    final size = MediaQuery.of(context).size;
+    final bool isTablet = size.width > 600;
+    final horizontalPadding =
+        isTablet ? ((size.width - 560) / 2.0) : 14.0;
+
     final items = [
       NavigationDestination(
-        icon: Icon(Icons.photo_library_outlined, color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
-        selectedIcon: Icon(Icons.photo_library_rounded, color: isDark ? Colors.white70 : AppColorsLight.primary),
+        icon: Icon(Icons.photo_library_outlined,
+            color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
+        selectedIcon: Icon(Icons.photo_library_rounded,
+            color: isDark
+                ? Color(0xFF4285F4)
+                : Color(0xFF1A73E8)),
         label: loc.library,
       ),
       NavigationDestination(
-        icon: Icon(Icons.cloud_upload_outlined, color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
-        selectedIcon: Icon(Icons.cloud_upload_rounded, color: isDark ? Colors.white70 : AppColorsLight.primary),
+        icon: Icon(Icons.cloud_upload_outlined,
+            color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
+        selectedIcon: Icon(Icons.cloud_upload_rounded,
+            color: isDark
+                ? Color(0xFF4285F4)
+                : Color(0xFF1A73E8)),
         label: loc.backup,
       ),
       NavigationDestination(
-        icon: Icon(Icons.settings_outlined, color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
-        selectedIcon: Icon(Icons.settings_rounded, color: isDark ? Colors.white70 : AppColorsLight.primary),
+        icon: Icon(Icons.settings_outlined,
+            color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
+        selectedIcon: Icon(Icons.settings_rounded,
+            color: isDark
+                ? Color(0xFF4285F4)
+                : Color(0xFF1A73E8)),
         label: loc.settings,
       ),
     ];
 
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(14, 0, 14, bottomPadding + 2),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(horizontalPadding, 0.0, horizontalPadding, 8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 20.0,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28.0),
+            child: NavigationBar(
+              height: 64.0,
+              backgroundColor: surfaceColor.withValues(alpha: 0.95),
+              indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+              selectedIndex: index,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: items,
+              onDestinationSelected: onTap,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: NavigationBar(
-            height: 56,
-            backgroundColor: surfaceColor.withValues(alpha: 0.95),
-            indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-            selectedIndex: index,
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: items,
-            onDestinationSelected: onTap,
           ),
         ),
       ),
