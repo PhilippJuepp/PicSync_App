@@ -1,12 +1,14 @@
 import 'package:photo_manager/photo_manager.dart';
+import 'file_hash.dart';
 
 class UploadItem {
   final AssetEntity asset;
   final int size;
+  late final String hash;
   String? uploadId;
   int uploaded = 0;
 
-  UploadItem(this.asset, this.size);
+  UploadItem(this.asset, this.size, this.hash);
 
   String get mimeType => asset.mimeType ?? "application/octet-stream";
 }
@@ -21,9 +23,14 @@ class UploadQueue {
 
     for (final asset in assets) {
       final file = await asset.file;
-      if (file == null) continue;
+      if (file == null) {
+        continue;
+      }
 
-      items.add(UploadItem(asset, await file.length()));
+      final hash = await sha256File(file);
+      final size = await file.length();
+
+      items.add(UploadItem(asset, size, hash));
     }
 
     return UploadQueue(items);

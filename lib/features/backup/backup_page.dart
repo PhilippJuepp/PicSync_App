@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:picsync_app/gen_l10n/app_localizations.dart';
 import 'album_picker_page.dart';
 import 'gallery_scanner.dart';
 import 'upload_queue.dart';
@@ -25,7 +26,7 @@ class _BackupPageState extends State<BackupPage> {
     Widget build(BuildContext context) {
       return Scaffold(
         appBar: buildAppBar(
-          title: "Backup",
+          title: AppLocalizations.of(context)!.backup,
           onReload: () {
             // Optional: Neuladen der Alben oder Status
           },

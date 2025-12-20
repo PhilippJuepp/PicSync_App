@@ -26,7 +26,12 @@ class UploadWorker {
           'filename': item.asset.title,
           'size': item.size,
           'mime': item.mimeType,
+          'hash': item.hash,
       });
+
+      if (initResp['status'] == 'exists') {
+        return;
+      }
 
       final uploadId = initResp['upload_id'] ?? initResp['id'];
       if (uploadId == null) throw Exception("Upload ID missing from init response");
