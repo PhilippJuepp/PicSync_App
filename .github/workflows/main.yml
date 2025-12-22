@@ -62,6 +62,15 @@ jobs:
           TAG="v${{ steps.version.outputs.version }}"
           gh release create "$TAG" --title "Picsync $TAG"
 
+      - name: Setup Key Properties
+        run: |
+          cat <<EOF > android/key.properties
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=app/release-key.jks
+          EOF
+
       - name: Build APK
         run: flutter build apk --release
 
