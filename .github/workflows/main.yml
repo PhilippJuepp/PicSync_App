@@ -61,6 +61,10 @@ jobs:
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           gh release create "$TAG" --title "Picsync $TAG"
+          
+      - name: Restore Keystore
+        run: |
+          echo ${{ secrets.JKS_BASE64 }} | base64 --decode > android/app/release-key.jks
 
       - name: Setup Key Properties
         run: |
@@ -70,6 +74,25 @@ jobs:
           keyAlias=${{ secrets.KEY_ALIAS }}
           storeFile=release-key.jks
           EOF
+
+      - name: Check Keystore
+        run: |
+          echo "Checking if Keystore exists..."
+          if [ -f android/app/release-key.jks ]; then
+            echo "Keystore file exists"
+          else
+            echo "Keystore file NOT found"
+            exit 1
+          fi
+
+          echo "Checking key.properties..."
+          if [ -f android/key.properties ]; then
+            echo "key.properties exists"
+            cat android/key.properties
+          else
+            echo "key.properties NOT found"
+            exit 1
+          fi
 
       - name: Build APK
         run: flutter build apk --release
