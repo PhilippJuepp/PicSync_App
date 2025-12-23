@@ -62,9 +62,15 @@ jobs:
           TAG="v${{ steps.version.outputs.version }}"
           gh release create "$TAG" --title "Picsync $TAG"
           
-      - name: Restore Keystore
+      - name: Restore Keystore safely
         run: |
-          echo ${{ secrets.JKS_BASE64 }} | base64 --decode > android/app/release-key.jks
+          printf "%s" "${{ secrets.JKS_BASE64 }}" | base64 --decode > android/app/release-key.jks
+
+      - name: Verify Keystore
+        run: |
+          keytool -list -v -keystore android/app/release-key.jks \
+            -storepass ${{ secrets.KEYSTORE_PASSWORD }} \
+            -alias ${{ secrets.KEY_ALIAS }}
 
       - name: Setup Key Properties
         run: |
