@@ -61,50 +61,33 @@ jobs:
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           gh release create "$TAG" --title "Picsync $TAG"
-          
-      - name: Restore Keystore safely
-        run: |
-          printf "%s" "${{ secrets.JKS_BASE64 }}" | base64 --decode > android/app/release-key.jks
 
-      - name: Verify Keystore
+      - name: Decode Keystore
         run: |
-          keytool -list -v -keystore android/app/release-key.jks \
-            -storepass ${{ secrets.KEYSTORE_PASSWORD }} \
-            -alias ${{ secrets.KEY_ALIAS }}
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
 
       - name: Setup Key Properties
         run: |
           cat <<EOF > android/key.properties
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=release-key.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=keystore.jks
           EOF
 
-      - name: Check Keystore
+      - name: Verify Keystore
         run: |
-          echo "Checking if Keystore exists..."
-          if [ -f android/app/release-key.jks ]; then
-            echo "Keystore file exists"
-          else
-            echo "Keystore file NOT found"
-            exit 1
-          fi
-
-          echo "Checking key.properties..."
-          if [ -f android/key.properties ]; then
-            echo "key.properties exists"
-            cat android/key.properties
-          else
-            echo "key.properties NOT found"
-            exit 1
-          fi
+          keytool -list -v -keystore android/app/keystore.jks \
+            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -alias ${{ secrets.ANDROID_KEY_ALIAS }}
 
       - name: Build APK
         run: flutter build apk --release
 
       - name: Rename Android Build
-        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Picsync-${{ steps.version.outputs.version }}.apk
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+          build/app/outputs/flutter-apk/Picsync-${{ steps.version.outputs.version }}.apk
 
       - name: Build iOS unsigned
         run: flutter build ios --release --no-codesign

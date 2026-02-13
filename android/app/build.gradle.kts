@@ -27,13 +27,9 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-        }
+        create("release")
     }
+
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -47,14 +43,39 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
+
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            val isReleaseTask = gradle.startParameter.taskNames.any {
+                it.contains("release", ignoreCase = true)
+            }
+
+            if (isReleaseTask) {
+                val keystoreFile = System.getenv("KEYSTORE_FILE")
+                val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+                val keyAlias = System.getenv("KEY_ALIAS")
+                val keyPassword = System.getenv("KEY_PASSWORD")
+
+                if (
+                    keystoreFile.isNullOrBlank() ||
+                    keystorePassword.isNullOrBlank() ||
+                    keyAlias.isNullOrBlank() ||
+                    keyPassword.isNullOrBlank()
+                ) {
+                    throw GradleException(
+                        "Release-Build abgebrochen: Signing-ENV-Variablen fehlen."
+                    )
+                }
+
+                signingConfig = signingConfigs.getByName("release").apply {
+                    storeFile = file(keystoreFile)
+                    storePassword = keystorePassword
+                    this.keyAlias = keyAlias
+                    this.keyPassword = keyPassword
+                }
+            }
         }
     }
 }
