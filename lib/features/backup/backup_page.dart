@@ -88,7 +88,7 @@ class _BackupPageState extends State<BackupPage> {
                           foundAssets,
                           db,
                         );
-                        final worker = UploadWorker(queue);
+                        final worker = UploadWorker(queue, db);
                         await worker.start(onProgress: (u, total) {
                           setState(() {
                             uploaded = u;
