@@ -2,15 +2,17 @@ import '../../core/services/api_client.dart';
 import 'upload_queue.dart';
 import 'dart:math';
 import 'package:mutex/mutex.dart';
+import '../../data/database/app_database.dart';
 
 class UploadWorker {
   final UploadQueue queue;
+  final AppDatabase db;
   final _indexMutex = Mutex();
 
   bool _aborted = false;
   int _index = 0;
 
-  UploadWorker(this.queue);
+  UploadWorker(this.queue, this.db);
 
   Future<void> start({required Function(int, int) onProgress}) async {
     const int parallelFiles = 1;
@@ -24,10 +26,18 @@ class UploadWorker {
         if (item == null) break;
 
         try {
+          await db.updateStatus(item.asset.id, 'UPLOADING');
+
           await uploadItem(item);
+
+          await db.markDone(item.asset.id, item.hash);
+
           uploaded++;
           onProgress(uploaded, total);
         } catch (e) {
+          
+          await db.updateStatus(item.asset.id, 'ERROR');
+
           _aborted = true;
           rethrow;
         }

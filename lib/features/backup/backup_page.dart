@@ -6,6 +6,7 @@ import 'gallery_scanner.dart';
 import 'upload_queue.dart';
 import 'upload_worker.dart';
 import '../../core/widgets/app_bar.dart';
+import '../../data/database/database_provider.dart';
 
 class BackupPage extends StatefulWidget {
   const BackupPage({super.key});
@@ -82,8 +83,12 @@ class _BackupPageState extends State<BackupPage> {
                           uploaded = 0;
                           progress = 0;
                         });
-                        final queue = await UploadQueue.fromAssets(foundAssets);
-                        final worker = UploadWorker(queue);
+                        final db = DatabaseProvider.instance;
+                        final queue = await UploadQueue.fromAssets(
+                          foundAssets,
+                          db,
+                        );
+                        final worker = UploadWorker(queue, db);
                         await worker.start(onProgress: (u, total) {
                           setState(() {
                             uploaded = u;

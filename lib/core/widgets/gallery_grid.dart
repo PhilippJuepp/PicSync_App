@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
-import '../../features/home/gallery_page.dart' show AssetDto;
 import 'asset_tile.dart';
+import '../../features/home/asset_dto.dart';
 
 class ZoomableGrid extends StatefulWidget {
   final List<AssetDto> assets;

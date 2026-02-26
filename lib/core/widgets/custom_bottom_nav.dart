@@ -112,7 +112,6 @@ class AdaptiveNavBar extends StatelessWidget {
 
     final items = [
       NavigationDestination(
-        tooltip: '',
         icon: Icon(Icons.photo_library_outlined,
             color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
         selectedIcon: Icon(Icons.photo_library_rounded,
@@ -122,7 +121,6 @@ class AdaptiveNavBar extends StatelessWidget {
         label: loc.library,
       ),
       NavigationDestination(
-        tooltip: '',
         icon: Icon(Icons.cloud_upload_outlined,
             color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
         selectedIcon: Icon(Icons.cloud_upload_rounded,
@@ -132,7 +130,6 @@ class AdaptiveNavBar extends StatelessWidget {
         label: loc.backup,
       ),
       NavigationDestination(
-        tooltip: '',
         icon: Icon(Icons.settings_outlined,
             color: isDark ? AppColorsDark.iconInactive : AppColorsLight.iconInactive),
         selectedIcon: Icon(Icons.settings_rounded,

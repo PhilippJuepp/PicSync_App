@@ -13,7 +13,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
-  final pages = const [GalleryPage(), BackupPage(), SettingsPage()];
+  final pages = const [ModernGalleryPage(), BackupPage(), SettingsPage()];
 
   void _onTab(int i) => setState(() => _index = i);
 
@@ -21,7 +21,10 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      body: SafeArea(child: pages[_index]),
+      body: SafeArea(
+        bottom: false,
+        child: IndexedStack(index: _index, children: pages),
+      ),
       bottomNavigationBar: AdaptiveNavBar(index: _index, onTap: _onTab),
     );
   }

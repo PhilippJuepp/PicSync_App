@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
-import '../../features/home/gallery_page.dart' show AssetDto;
+import '../../features/home/asset_dto.dart';
 
 class AssetTile extends StatelessWidget {
   final AssetDto asset;
