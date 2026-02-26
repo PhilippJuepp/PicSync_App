@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -34,7 +36,7 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
-    
+
     // Auto-hide UI after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -56,11 +58,13 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
   }
 
   Future<void> _loadVideo(AssetEntity asset) async {
+    if (!mounted) return;
     setState(() => _isLoadingVideo = true);
-    
+
     try {
       final file = await asset.file;
       if (file == null) {
+        if (!mounted) return;
         setState(() => _isLoadingVideo = false);
         return;
       }
@@ -69,10 +73,12 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
       _videoController = VideoPlayerController.file(file);
       await _videoController!.initialize();
       await _videoController!.play();
-      
+
+      if (!mounted) return;
       setState(() => _isLoadingVideo = false);
     } catch (e) {
       debugPrint('Error loading video: $e');
+      if (!mounted) return;
       setState(() => _isLoadingVideo = false);
     }
   }
@@ -81,7 +87,7 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
     setState(() => _currentIndex = index);
 
     final asset = widget.assets[index];
-    
+
     // Dispose previous video controller
     if (_videoController != null) {
       _videoController!.dispose();
@@ -102,6 +108,18 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
     return DateFormat('d. MMMM yyyy, HH:mm', 'de_DE').format(date);
   }
 
+  String _buildInfoLine(AssetEntity asset) {
+    final parts = <String>[];
+    parts.add('${_currentIndex + 1} von ${widget.assets.length}');
+    parts.add('${asset.width} × ${asset.height}');
+    if (asset.type == AssetType.video) {
+      parts.add(
+        _formatVideoDuration(Duration(seconds: asset.duration)),
+      );
+    }
+    return parts.join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,139 +136,115 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                 itemCount: widget.assets.length,
                 onPageChanged: _onPageChanged,
                 builder: (context, index) {
-                final asset = widget.assets[index];
-                
-                if (asset.type == AssetType.video) {
-                  return PhotoViewGalleryPageOptions.customChild(
-                    child: _buildVideoPlayer(asset),
-                    heroAttributes: PhotoViewHeroAttributes(tag: 'asset_${asset.id}'),
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.covered * 2,
-                  );
-                }
+                  final asset = widget.assets[index];
 
-                return PhotoViewGalleryPageOptions(
-                  imageProvider: AssetEntityImageProvider(
-                    asset,
-                    isOriginal: true,
-                  ),
-                  heroAttributes: PhotoViewHeroAttributes(tag: 'asset_${asset.id}'),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.covered * 3,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.broken_image,
-                            color: Colors.white,
-                            size: 64,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Fehler beim Laden',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
+                  if (asset.type == AssetType.video) {
+                    return PhotoViewGalleryPageOptions.customChild(
+                      child: index == _currentIndex
+                          ? _buildVideoPlayer(asset)
+                          : _buildVideoPlaceholder(asset),
+                      heroAttributes: PhotoViewHeroAttributes(
+                        tag: 'asset_${asset.id}',
                       ),
+                      minScale: PhotoViewComputedScale.contained,
+                      maxScale: PhotoViewComputedScale.covered * 2,
                     );
-                  },
-                );
-              },
-              backgroundDecoration: const BoxDecoration(
-                color: Colors.black,
-              ),
-              loadingBuilder: (context, event) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                );
-              },
+                  }
+
+                  return PhotoViewGalleryPageOptions(
+                    imageProvider: AssetEntityImageProvider(
+                      asset,
+                      isOriginal: true,
+                    ),
+                    heroAttributes: PhotoViewHeroAttributes(
+                      tag: 'asset_${asset.id}',
+                    ),
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 3,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.broken_image,
+                              color: Colors.white,
+                              size: 64,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Fehler beim Laden',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                backgroundDecoration: const BoxDecoration(color: Colors.black),
+                loadingBuilder: (context, event) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
+                },
               ),
             ),
 
-            // Top bar with close button and info
-            if (_showUI)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.6),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.share, color: Colors.white),
-                            onPressed: () {
-                              // TODO: Implement share
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.more_vert, color: Colors.white),
-                            onPressed: () => _showBottomSheet(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            if (_showUI) _buildTopOverlay(widget.assets[_currentIndex]),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Bottom info bar
-            if (_showUI)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.6),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
+  Widget _buildTopOverlay(AssetEntity asset) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          child: Row(
+            children: [
+              _buildRoundAction(
+                icon: Icons.close,
+                onPressed: () => Navigator.pop(context),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 90),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 40),
+                          width: 0.8,
+                        ),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _formatDate(widget.assets[_currentIndex].createDateTime),
+                            _formatDate(asset.createDateTime),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
-                            '${_currentIndex + 1} von ${widget.assets.length}',
+                            _buildInfoLine(asset),
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 178),
                               fontSize: 12,
                             ),
                           ),
@@ -260,7 +254,38 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                   ),
                 ),
               ),
-          ],
+              const SizedBox(width: 10),
+              _buildRoundAction(
+                icon: Icons.more_vert,
+                onPressed: _showBottomSheet,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoundAction({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return ClipOval(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 110),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 40),
+              width: 0.8,
+            ),
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(icon, color: Colors.white),
+            onPressed: onPressed,
+          ),
         ),
       ),
     );
@@ -269,23 +294,36 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
   Widget _buildVideoPlayer(AssetEntity asset) {
     return GestureDetector(
       onTap: _toggleUI,
-      child: Center(
-        child: _isLoadingVideo
-            ? const CircularProgressIndicator(color: Colors.white)
-            : _videoController != null && _videoController!.value.isInitialized
-                ? Stack(
+      child: _isLoadingVideo
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : _videoController != null && _videoController!.value.isInitialized
+          ? SizedBox.expand(
+              child: ValueListenableBuilder<VideoPlayerValue>(
+                valueListenable: _videoController!,
+                builder: (context, value, child) {
+                  final duration = value.duration;
+                  final maxMs = duration.inMilliseconds > 0
+                      ? duration.inMilliseconds.toDouble()
+                      : 1.0;
+                  final positionMs = value.position.inMilliseconds
+                      .clamp(0, maxMs.toInt())
+                      .toDouble();
+
+                  return Stack(
                     alignment: Alignment.center,
                     children: [
-                      AspectRatio(
-                        aspectRatio: _videoController!.value.aspectRatio,
-                        child: VideoPlayer(_videoController!),
+                      Center(
+                        child: AspectRatio(
+                          aspectRatio: value.aspectRatio,
+                          child: VideoPlayer(_videoController!),
+                        ),
                       ),
-                      if (!_videoController!.value.isPlaying)
+                      if (!value.isPlaying)
                         Container(
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 128),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -293,56 +331,24 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                             color: Colors.white,
                             onPressed: () {
                               _videoController!.play();
-                              setState(() {});
                             },
                           ),
                         ),
-                      if (_videoController!.value.isPlaying && _showUI)
+                      if (_showUI)
                         Positioned(
-                          bottom: 20,
-                          left: 20,
-                          right: 20,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  _videoController!.value.isPlaying
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  if (_videoController!.value.isPlaying) {
-                                    _videoController!.pause();
-                                  } else {
-                                    _videoController!.play();
-                                  }
-                                  setState(() {});
-                                },
-                              ),
-                              Expanded(
-                                child: VideoProgressIndicator(
-                                  _videoController!,
-                                  allowScrubbing: true,
-                                  colors: const VideoProgressColors(
-                                    playedColor: Colors.white,
-                                    bufferedColor: Colors.white30,
-                                    backgroundColor: Colors.white10,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatVideoDuration(_videoController!.value.position),
-                                style: const TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ],
-                          ),
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: _buildVideoControls(value, positionMs, maxMs),
                         ),
                     ],
-                  )
-                : const Icon(Icons.error, color: Colors.white, size: 64),
-      ),
+                  );
+                },
+              ),
+            )
+          : const Center(
+              child: Icon(Icons.error, color: Colors.white, size: 64),
+            ),
     );
   }
 
@@ -354,7 +360,7 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
 
   void _showBottomSheet() {
     final asset = widget.assets[_currentIndex];
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[900],
@@ -368,39 +374,140 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
             children: [
               ListTile(
                 leading: const Icon(Icons.info_outline, color: Colors.white),
-                title: const Text('Details', style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Details',
+                  style: TextStyle(color: Colors.white),
+                ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
                     Text(
                       'Datum: ${_formatDate(asset.createDateTime)}',
-                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 178),
+                        fontSize: 12,
+                      ),
                     ),
                     Text(
                       'Auflösung: ${asset.width} × ${asset.height}',
-                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 178),
+                        fontSize: 12,
+                      ),
                     ),
                     if (asset.type == AssetType.video)
                       Text(
                         'Dauer: ${_formatVideoDuration(Duration(seconds: asset.duration))}',
-                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 178),
+                          fontSize: 12,
+                        ),
                       ),
                   ],
                 ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Löschen', style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(context);
-                  // TODO: Implement delete
-                },
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildVideoPlaceholder(AssetEntity asset) {
+    return Center(
+      child: AssetEntityImage(
+        asset,
+        isOriginal: false,
+        thumbnailSize: const ThumbnailSize.square(800),
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+
+  Widget _buildVideoControls(
+    VideoPlayerValue value,
+    double positionMs,
+    double maxMs,
+  ) {
+    final duration = value.duration;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 130),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 35),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      value.isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      if (value.isPlaying) {
+                        _videoController!.pause();
+                      } else {
+                        _videoController!.play();
+                      }
+                    },
+                  ),
+                  Text(
+                    _formatVideoDuration(value.position),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 2,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 6,
+                        ),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 14,
+                        ),
+                      ),
+                      child: Slider(
+                        value: positionMs,
+                        min: 0,
+                        max: maxMs,
+                        activeColor: Colors.white,
+                        inactiveColor: Colors.white30,
+                        onChanged: (valueMs) {
+                          _videoController!.seekTo(
+                            Duration(milliseconds: valueMs.round()),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _formatVideoDuration(duration),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 200),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

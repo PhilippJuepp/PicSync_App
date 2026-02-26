@@ -56,17 +56,13 @@ class GalleryTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 178),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 14,
-                    ),
+                    const Icon(Icons.play_arrow, color: Colors.white, size: 14),
                     const SizedBox(width: 2),
                     Text(
                       _formatDuration(asset.duration),
@@ -85,8 +81,8 @@ class GalleryTile extends StatelessWidget {
           if (isSelectionMode)
             Container(
               color: isSelected
-                  ? Colors.blue.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.1),
+                  ? Colors.blue.withValues(alpha: 77)
+                  : Colors.black.withValues(alpha: 26),
             ),
 
           // Selection checkbox
@@ -99,18 +95,16 @@ class GalleryTile extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isSelected ? Colors.blue : Colors.white.withOpacity(0.7),
+                  color: isSelected
+                      ? Colors.blue
+                      : Colors.white.withValues(alpha: 178),
                   border: Border.all(
                     color: isSelected ? Colors.blue : Colors.grey[400]!,
                     width: 2,
                   ),
                 ),
                 child: isSelected
-                    ? const Icon(
-                        Icons.check,
-                        size: 16,
-                        color: Colors.white,
-                      )
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
                     : null,
               ),
             ),

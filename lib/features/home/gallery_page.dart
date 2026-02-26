@@ -4,14 +4,8 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:intl/intl.dart';
 import 'widgets/gallery_tile.dart';
 import 'widgets/photo_video_viewer.dart';
+import '../../core/widgets/connection_status_icon.dart';
 
-/// Modern Gallery Page - Google Photos Style
-/// Features:
-/// - Date grouping with sticky headers
-/// - Photos + Videos support
-/// - High performance with optimized thumbnails
-/// - Multi-select mode
-/// - Smooth scrolling with pagination
 class ModernGalleryPage extends StatefulWidget {
   const ModernGalleryPage({Key? key}) : super(key: key);
 
@@ -19,7 +13,8 @@ class ModernGalleryPage extends StatefulWidget {
   State<ModernGalleryPage> createState() => _ModernGalleryPageState();
 }
 
-class _ModernGalleryPageState extends State<ModernGalleryPage> {
+class _ModernGalleryPageState extends State<ModernGalleryPage>
+    with AutomaticKeepAliveClientMixin {
   static const int _pageSize = 200; // Increased for better performance
   static const int _crossAxisCount = 4; // Standard grid count
   static const double _spacing = 2.0;
@@ -27,7 +22,9 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
   List<AssetPathEntity> _albums = [];
   Map<String, List<AssetEntity>> _groupedAssets = {};
   List<String> _dateKeys = []; // Sorted date keys
-  
+  final List<AssetEntity> _allAssets = [];
+  final Map<String, int> _assetIndexById = {};
+
   int _currentPage = 0;
   bool _isLoading = false;
   bool _hasMore = true;
@@ -40,6 +37,9 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
   final ScrollController _scrollController = ScrollController();
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
     _initGallery();
@@ -48,7 +48,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
 
   Future<void> _initGallery() async {
     setState(() => _isInitializing = true);
-    
+
     final permission = await PhotoManager.requestPermissionExtend();
     if (!permission.isAuth) {
       if (mounted) {
@@ -69,7 +69,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
           sizeConstraint: SizeConstraint(ignoreSize: true),
         ),
         orders: [
-          const OrderOption(type: OrderOptionType.createDate, asc: false)
+          const OrderOption(type: OrderOptionType.createDate, asc: false),
         ],
       ),
     );
@@ -78,6 +78,8 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
       _albums = albums;
       _groupedAssets.clear();
       _dateKeys.clear();
+      _allAssets.clear();
+      _assetIndexById.clear();
       _currentPage = 0;
       _hasMore = true;
       _isInitializing = false;
@@ -111,6 +113,11 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
           _dateKeys.add(dateKey);
         }
         _groupedAssets[dateKey]!.add(asset);
+
+        if (!_assetIndexById.containsKey(asset.id)) {
+          _assetIndexById[asset.id] = _allAssets.length;
+          _allAssets.add(asset);
+        }
       }
 
       // Sort date keys (newest first)
@@ -187,14 +194,14 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
     });
   }
 
-  void _openViewer(List<AssetEntity> assets, int initialIndex) {
+  void _openViewer(AssetEntity asset) {
+    final initialIndex = _assetIndexById[asset.id] ?? 0;
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PhotoVideoViewer(
-          assets: assets,
-          initialIndex: initialIndex,
-        ),
+        builder: (_) =>
+            PhotoVideoViewer(assets: _allAssets, initialIndex: initialIndex),
       ),
     );
   }
@@ -208,86 +215,43 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark,
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              Expanded(
-                child: _buildBody(),
-              ),
-            ],
-          ),
-        ),
-      ),
+      appBar: _buildAppBar(),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          if (!_isSelectionMode) ...[
-            const Text(
-              'Fotos',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                // TODO: Implement search
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {
-                // TODO: Implement menu
-              },
-            ),
-          ] else ...[
-            IconButton(
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      title: Text(
+        _isSelectionMode ? '${_selectedAssets.length} ausgewählt' : 'Fotos',
+        style: TextStyle(
+          fontSize: _isSelectionMode ? 18 : 28,
+          fontWeight: _isSelectionMode ? FontWeight.w500 : FontWeight.bold,
+        ),
+      ),
+      leading: _isSelectionMode
+          ? IconButton(
               icon: const Icon(Icons.close),
               onPressed: _toggleSelectionMode,
-            ),
-            Text(
-              '${_selectedAssets.length} ausgewählt',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () {
-                // TODO: Implement share
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () {
-                // TODO: Implement delete
-              },
-            ),
-          ],
-        ],
-      ),
+            )
+          : null,
+      actions: const [ConnectionStatusIcon(), SizedBox(width: 12)],
     );
   }
 
   Widget _buildBody() {
     if (_isInitializing) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_albums.isEmpty) {
@@ -295,7 +259,11 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
+            const Icon(
+              Icons.photo_library_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 16),
             const Text(
               'Keine Fotos gefunden',
@@ -329,10 +297,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
                 child: Center(child: CircularProgressIndicator()),
               ),
             ),
-          // Bottom padding
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 80),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
       ),
     );
@@ -347,9 +312,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
 
       // Date header
       slivers.add(
-        SliverToBoxAdapter(
-          child: _buildDateHeader(date, assets.length),
-        ),
+        SliverToBoxAdapter(child: _buildDateHeader(date, assets.length)),
       );
 
       // Grid of assets
@@ -362,32 +325,24 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
               crossAxisSpacing: _spacing,
               mainAxisSpacing: _spacing,
             ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final asset = assets[index];
-                final isSelected = _selectedAssets.contains(asset.id);
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final asset = assets[index];
+              final isSelected = _selectedAssets.contains(asset.id);
 
-                return GalleryTile(
-                  asset: asset,
-                  isSelectionMode: _isSelectionMode,
-                  isSelected: isSelected,
-                  onTap: () {
-                    if (_isSelectionMode) {
-                      _toggleAssetSelection(asset.id);
-                    } else {
-                      _openViewer(assets, index);
-                    }
-                  },
-                  onLongPress: () {
-                    if (!_isSelectionMode) {
-                      setState(() => _isSelectionMode = true);
-                    }
+              return GalleryTile(
+                asset: asset,
+                isSelectionMode: _isSelectionMode,
+                isSelected: isSelected,
+                onTap: () {
+                  if (_isSelectionMode) {
                     _toggleAssetSelection(asset.id);
-                  },
-                );
-              },
-              childCount: assets.length,
-            ),
+                  } else {
+                    _openViewer(asset);
+                  }
+                },
+                onLongPress: () {},
+              );
+            }, childCount: assets.length),
           ),
         ),
       );
@@ -417,18 +372,12 @@ class _ModernGalleryPageState extends State<ModernGalleryPage> {
         children: [
           Text(
             headerText,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(width: 8),
           Text(
             '($count)',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
         ],
       ),
