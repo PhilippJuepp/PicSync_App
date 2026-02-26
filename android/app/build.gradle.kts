@@ -22,10 +22,6 @@ android {
         jvmTarget = "17"
     }
 
-    val keystoreProperties = Properties().apply {
-        load(FileInputStream(rootProject.file("key.properties")))
-    }
-
     signingConfigs {
         create("release")
     }
