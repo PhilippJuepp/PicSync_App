@@ -39,5 +39,21 @@
       "backup": "Backup",
       "settings": "Settings",
       "refresh": "Refresh",
-      "no_media_found": "No media found"
+      "no_media_found": "No media found",
+
+      "gallery": "Gallery",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "selected": "selected",
+      "noPhotos": "No photos",
+      "permissionRequired": "Permission Required",
+      "permissionSubtitle": "PicSync needs access to your photos and videos to display and back them up.",
+      "cancel": "Cancel",
+      "openSettings": "Open Settings",
+      "retry": "Retry",
+
+      "connectionStatus": "Connection",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "serverAddress": "SERVER"
 }

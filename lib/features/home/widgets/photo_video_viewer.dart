@@ -9,7 +9,6 @@ import 'package:video_player/video_player.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
-/// Full-screen photo and video viewer with swipe navigation
 class PhotoVideoViewer extends StatefulWidget {
   final List<AssetEntity> assets;
   final int initialIndex;
@@ -37,14 +36,12 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
 
-    // Auto-hide UI after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() => _showUI = false);
       }
     });
 
-    // Load video if initial asset is a video
     if (widget.assets[_currentIndex].type == AssetType.video) {
       _loadVideo(widget.assets[_currentIndex]);
     }
@@ -88,13 +85,11 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
 
     final asset = widget.assets[index];
 
-    // Dispose previous video controller
     if (_videoController != null) {
       _videoController!.dispose();
       _videoController = null;
     }
 
-    // Load new video if needed
     if (asset.type == AssetType.video) {
       _loadVideo(asset);
     }
@@ -105,13 +100,13 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('d. MMMM yyyy, HH:mm', 'de_DE').format(date);
+    return DateFormat('MMM d, yyyy, h:mm a').format(date);
   }
 
   String _buildInfoLine(AssetEntity asset) {
     final parts = <String>[];
-    parts.add('${_currentIndex + 1} von ${widget.assets.length}');
-    parts.add('${asset.width} × ${asset.height}');
+    parts.add('${_currentIndex + 1}/${widget.assets.length}');
+    parts.add('${asset.width}×${asset.height}');
     if (asset.type == AssetType.video) {
       parts.add(
         _formatVideoDuration(Duration(seconds: asset.duration)),
@@ -128,7 +123,6 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
         value: SystemUiOverlayStyle.light,
         child: Stack(
           children: [
-            // Photo/Video Gallery
             GestureDetector(
               onTap: _toggleUI,
               child: PhotoViewGallery.builder(
@@ -162,19 +156,19 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                     minScale: PhotoViewComputedScale.contained,
                     maxScale: PhotoViewComputedScale.covered * 3,
                     errorBuilder: (context, error, stackTrace) {
-                      return Center(
+                      return const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.broken_image,
+                            Icon(
+                              Icons.broken_image_outlined,
                               color: Colors.white,
-                              size: 64,
+                              size: 56,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Fehler beim Laden',
-                              style: TextStyle(color: Colors.white),
+                            SizedBox(height: 12),
+                            Text(
+                              'Failed to load',
+                              style: TextStyle(color: Colors.white, fontSize: 14),
                             ),
                           ],
                         ),
@@ -184,8 +178,13 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                 },
                 backgroundDecoration: const BoxDecoration(color: Colors.black),
                 loadingBuilder: (context, event) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                  return Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.grey[400]!,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -383,14 +382,14 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                   children: [
                     const SizedBox(height: 8),
                     Text(
-                      'Datum: ${_formatDate(asset.createDateTime)}',
+                      'Date: ${_formatDate(asset.createDateTime)}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 178),
                         fontSize: 12,
                       ),
                     ),
                     Text(
-                      'Auflösung: ${asset.width} × ${asset.height}',
+                      'Resolution: ${asset.width}×${asset.height}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 178),
                         fontSize: 12,
@@ -398,7 +397,7 @@ class _PhotoVideoViewerState extends State<PhotoVideoViewer> {
                     ),
                     if (asset.type == AssetType.video)
                       Text(
-                        'Dauer: ${_formatVideoDuration(Duration(seconds: asset.duration))}',
+                        'Duration: ${_formatVideoDuration(Duration(seconds: asset.duration))}',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 178),
                           fontSize: 12,

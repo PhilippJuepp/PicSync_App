@@ -113,4 +113,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get no_media_found => 'No media found';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String get selected => 'selected';
+
+  @override
+  String get noPhotos => 'No photos';
+
+  @override
+  String get permissionRequired => 'Permission Required';
+
+  @override
+  String get permissionSubtitle =>
+      'PicSync needs access to your photos and videos to display and back them up.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get connectionStatus => 'Connection';
+
+  @override
+  String get connected => 'Connected';
+
+  @override
+  String get disconnected => 'Disconnected';
+
+  @override
+  String get serverAddress => 'SERVER';
 }

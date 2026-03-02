@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
-/// Individual gallery tile for displaying a photo or video
 class GalleryTile extends StatelessWidget {
   final AssetEntity asset;
   final bool isSelectionMode;
@@ -24,91 +23,114 @@ class GalleryTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Thumbnail image
-          Hero(
-            tag: 'asset_${asset.id}',
-            child: AssetEntityImage(
-              asset,
-              isOriginal: false,
-              thumbnailSize: const ThumbnailSize.square(400),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[300],
-                  child: const Icon(
-                    Icons.broken_image,
-                    color: Colors.grey,
-                    size: 40,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[900],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              RepaintBoundary(
+                child: Hero(
+                  tag: 'asset_${asset.id}',
+                  child: AssetEntityImage(
+                    asset,
+                    isOriginal: false,
+                    thumbnailSize: const ThumbnailSize.square(300),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[800],
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.grey[600],
+                          size: 32,
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
-
-          // Video duration indicator
-          if (asset.type == AssetType.video)
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 178),
-                  borderRadius: BorderRadius.circular(4),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.play_arrow, color: Colors.white, size: 14),
-                    const SizedBox(width: 2),
-                    Text(
-                      _formatDuration(asset.duration),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+              ),
+              if (asset.type == AssetType.video)
+                Positioned(
+                  bottom: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Selection overlay
-          if (isSelectionMode)
-            Container(
-              color: isSelected
-                  ? Colors.blue.withValues(alpha: 77)
-                  : Colors.black.withValues(alpha: 26),
-            ),
-
-          // Selection checkbox
-          if (isSelectionMode)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isSelected
-                      ? Colors.blue
-                      : Colors.white.withValues(alpha: 178),
-                  border: Border.all(
-                    color: isSelected ? Colors.blue : Colors.grey[400]!,
-                    width: 2,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          _formatDuration(asset.duration),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                child: isSelected
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
-              ),
-            ),
-        ],
+              if (isSelectionMode)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  color: isSelected
+                      ? Colors.blue.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.1),
+                ),
+              if (isSelectionMode)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.0 : 0.85,
+                    duration: const Duration(milliseconds: 150),
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? Colors.blue
+                            : Colors.white.withValues(alpha: 0.85),
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.blue
+                              : Colors.grey[400] ?? Colors.grey,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -116,7 +138,10 @@ class GalleryTile extends StatelessWidget {
   String _formatDuration(int seconds) {
     final duration = Duration(seconds: seconds);
     final minutes = duration.inMinutes;
-    final remainingSeconds = duration.inSeconds % 60;
-    return '${minutes.toString().padLeft(1, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    final secs = duration.inSeconds % 60;
+    if (minutes > 0) {
+      return '${minutes}:${secs.toString().padLeft(2, '0')}';
+    }
+    return '0:${secs.toString().padLeft(2, '0')}';
   }
 }

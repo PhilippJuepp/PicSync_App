@@ -28,9 +28,6 @@ class _BackupPageState extends State<BackupPage> {
       return Scaffold(
         appBar: buildAppBar(
           title: AppLocalizations.of(context)!.backup,
-          onReload: () {
-            // Optional: Neuladen der Alben oder Status
-          },
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
