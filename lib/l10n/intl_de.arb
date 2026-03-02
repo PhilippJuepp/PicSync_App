@@ -50,5 +50,10 @@
   "permissionSubtitle": "PicSync benötigt Zugriff auf deine Fotos und Videos, um sie anzuzeigen und zu sichern.",
   "cancel": "Abbrechen",
   "openSettings": "Einstellungen öffnen",
-  "retry": "Erneut versuchen"
+  "retry": "Erneut versuchen",
+
+  "connectionStatus": "Verbindung",
+  "connected": "Verbunden",
+  "disconnected": "Getrennt",
+  "serverAddress": "SERVER"
   }

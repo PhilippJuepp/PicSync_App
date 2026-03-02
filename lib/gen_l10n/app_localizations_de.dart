@@ -146,4 +146,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get retry => 'Erneut versuchen';
+
+  @override
+  String get connectionStatus => 'Verbindung';
+
+  @override
+  String get connected => 'Verbunden';
+
+  @override
+  String get disconnected => 'Getrennt';
+
+  @override
+  String get serverAddress => 'SERVER';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/connection_service.dart';
+import '../../gen_l10n/app_localizations.dart';
 
 class ConnectionStatusIcon extends StatefulWidget {
   final ScrollController? scrollController;
@@ -58,6 +59,7 @@ class _ConnectionStatusIconState extends State<ConnectionStatusIcon> {
   OverlayEntry _createOverlayEntry(String serverUrl, bool isConnected) {
     return OverlayEntry(
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final mediaQuery = MediaQuery.of(context);
         return Stack(
           children: [
@@ -130,7 +132,7 @@ class _ConnectionStatusIconState extends State<ConnectionStatusIcon> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Connection',
+                                      l10n.connectionStatus,
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[500],
@@ -139,7 +141,7 @@ class _ConnectionStatusIconState extends State<ConnectionStatusIcon> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      isConnected ? 'Connected' : 'Disconnected',
+                                      isConnected ? l10n.connected : l10n.disconnected,
                                       style: TextStyle(
                                         fontSize: 17,
                                         fontWeight: FontWeight.w600,
@@ -176,7 +178,7 @@ class _ConnectionStatusIconState extends State<ConnectionStatusIcon> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'SERVER',
+                                      l10n.serverAddress,
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.grey[500],
