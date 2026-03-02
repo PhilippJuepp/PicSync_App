@@ -115,4 +115,35 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get no_media_found => 'Keine Medien gefunden';
+
+  @override
+  String get gallery => 'Galerie';
+
+  @override
+  String get today => 'Heute';
+
+  @override
+  String get yesterday => 'Gestern';
+
+  @override
+  String get selected => 'ausgewählt';
+
+  @override
+  String get noPhotos => 'Keine Fotos';
+
+  @override
+  String get permissionRequired => 'Berechtigung erforderlich';
+
+  @override
+  String get permissionSubtitle =>
+      'PicSync benötigt Zugriff auf deine Fotos und Videos, um sie anzuzeigen und zu sichern.';
+
+  @override
+  String get cancel => 'Abbrechen';
+
+  @override
+  String get openSettings => 'Einstellungen öffnen';
+
+  @override
+  String get retry => 'Erneut versuchen';
 }

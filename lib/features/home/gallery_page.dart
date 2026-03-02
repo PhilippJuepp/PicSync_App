@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'widgets/gallery_tile.dart';
 import 'widgets/photo_video_viewer.dart';
 import '../../core/widgets/connection_status_icon.dart';
+import '../../gen_l10n/app_localizations.dart';
 
 class ModernGalleryPage extends StatefulWidget {
   const ModernGalleryPage({Key? key}) : super(key: key);
@@ -15,13 +16,13 @@ class ModernGalleryPage extends StatefulWidget {
 
 class _ModernGalleryPageState extends State<ModernGalleryPage>
     with AutomaticKeepAliveClientMixin {
-  static const int _pageSize = 200; // Increased for better performance
-  static const int _crossAxisCount = 4; // Standard grid count
+  static const int _pageSize = 200;
+  static const int _crossAxisCount = 4;
   static const double _spacing = 2.0;
 
   List<AssetPathEntity> _albums = [];
   Map<String, List<AssetEntity>> _groupedAssets = {};
-  List<String> _dateKeys = []; // Sorted date keys
+  List<String> _dateKeys = [];
   final List<AssetEntity> _allAssets = [];
   final Map<String, int> _assetIndexById = {};
 
@@ -30,7 +31,6 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
   bool _hasMore = true;
   bool _isInitializing = true;
 
-  // Multi-select mode
   bool _isSelectionMode = false;
   final Set<String> _selectedAssets = {};
 
@@ -60,7 +60,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
 
     final albums = await PhotoManager.getAssetPathList(
       onlyAll: true,
-      type: RequestType.common, // Both images and videos
+      type: RequestType.common,
       filterOption: FilterOptionGroup(
         imageOption: const FilterOption(
           sizeConstraint: SizeConstraint(ignoreSize: true),
@@ -103,7 +103,6 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
         setState(() => _hasMore = false);
       }
 
-      // Group assets by date
       for (final asset in assets) {
         final date = asset.createDateTime;
         final dateKey = DateFormat('yyyy-MM-dd').format(date);
@@ -120,7 +119,6 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
         }
       }
 
-      // Sort date keys (newest first)
       _dateKeys.sort((a, b) => b.compareTo(a));
 
       setState(() {
@@ -146,24 +144,23 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
   }
 
   void _showPermissionDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Berechtigung erforderlich'),
-        content: const Text(
-          'PicSync benötigt Zugriff auf deine Fotos und Videos, um sie anzuzeigen und zu sichern.',
-        ),
+        title: Text(l10n.permissionRequired),
+        content: Text(l10n.permissionSubtitle),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               PhotoManager.openSetting();
             },
-            child: const Text('Einstellungen öffnen'),
+            child: Text(l10n.openSettings),
           ),
         ],
       ),
@@ -224,6 +221,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
       automaticallyImplyLeading: false,
       systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -233,25 +231,33 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       title: Text(
-        _isSelectionMode ? '${_selectedAssets.length} ausgewählt' : 'Fotos',
+        _isSelectionMode
+            ? '${_selectedAssets.length} ${l10n.selected}'
+            : l10n.gallery,
         style: TextStyle(
-          fontSize: _isSelectionMode ? 18 : 28,
-          fontWeight: _isSelectionMode ? FontWeight.w500 : FontWeight.bold,
+          fontSize: _isSelectionMode ? 16 : 28,
+          fontWeight: _isSelectionMode ? FontWeight.w600 : FontWeight.bold,
+          letterSpacing: 0.3,
         ),
       ),
       leading: _isSelectionMode
           ? IconButton(
               icon: const Icon(Icons.close),
               onPressed: _toggleSelectionMode,
+              splashRadius: 20,
             )
           : null,
-      actions: const [ConnectionStatusIcon(), SizedBox(width: 12)],
+      actions: const [ConnectionStatusIcon(), SizedBox(width: 8)],
     );
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
+    
     if (_isInitializing) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
     }
 
     if (_albums.isEmpty) {
@@ -259,20 +265,31 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.photo_library_outlined,
-              size: 64,
-              color: Colors.grey,
+            Icon(
+              Icons.image_not_supported_outlined,
+              size: 56,
+              color: Colors.grey[400],
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Keine Fotos gefunden',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+            Text(
+              l10n.noPhotos,
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            const SizedBox(height: 8),
-            TextButton(
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
               onPressed: _initGallery,
-              child: const Text('Erneut versuchen'),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(l10n.retry),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
             ),
           ],
         ),
@@ -280,24 +297,35 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
     }
 
     if (_groupedAssets.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
     }
 
     return RefreshIndicator(
       onRefresh: _initGallery,
       child: CustomScrollView(
         controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         slivers: [
           ..._buildDateGroups(),
           if (_isLoading)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.grey[500]!,
+                    ),
+                  ),
+                ),
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
         ],
       ),
     );
@@ -352,6 +380,7 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
   }
 
   Widget _buildDateHeader(DateTime date, int count) {
+    final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
@@ -359,25 +388,33 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
 
     String headerText;
     if (dateToCheck == today) {
-      headerText = 'Heute';
+      headerText = l10n.today;
     } else if (dateToCheck == yesterday) {
-      headerText = 'Gestern';
+      headerText = l10n.yesterday;
     } else {
-      headerText = DateFormat('d. MMMM yyyy', 'de_DE').format(date);
+      headerText = DateFormat('MMMM d, yyyy').format(date);
     }
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
       child: Row(
         children: [
           Text(
             headerText,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.2,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(
             '($count)',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ],
       ),

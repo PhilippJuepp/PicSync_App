@@ -39,5 +39,16 @@
   "backup": "Backup",
   "settings": "Einstellungen",
   "refresh": "Aktualisieren",
-  "no_media_found": "Keine Medien gefunden"
+  "no_media_found": "Keine Medien gefunden",
+
+  "gallery": "Galerie",
+  "today": "Heute",
+  "yesterday": "Gestern",
+  "selected": "ausgewählt",
+  "noPhotos": "Keine Fotos",
+  "permissionRequired": "Berechtigung erforderlich",
+  "permissionSubtitle": "PicSync benötigt Zugriff auf deine Fotos und Videos, um sie anzuzeigen und zu sichern.",
+  "cancel": "Abbrechen",
+  "openSettings": "Einstellungen öffnen",
+  "retry": "Erneut versuchen"
   }
