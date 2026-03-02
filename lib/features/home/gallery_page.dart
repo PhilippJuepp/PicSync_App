@@ -247,7 +247,10 @@ class _ModernGalleryPageState extends State<ModernGalleryPage>
               splashRadius: 20,
             )
           : null,
-      actions: const [ConnectionStatusIcon(), SizedBox(width: 8)],
+      actions: [
+        ConnectionStatusIcon(scrollController: _scrollController),
+        const SizedBox(width: 12),
+      ],
     );
   }
 
