@@ -9,9 +9,11 @@ class UploadWorker {
   final UploadQueue queue;
   final AppDatabase db;
   final _indexMutex = Mutex();
+  final _progressMutex = Mutex();
 
   bool _aborted = false;
   int _index = 0;
+  DateTime _lastNotificationAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   UploadWorker(this.queue, this.db);
 
@@ -22,13 +24,48 @@ class UploadWorker {
     return fallback;
   }
 
+  int _chunkSizeForItem(UploadItem item) {
+    final isVideo = item.mimeType.startsWith('video');
+    return isVideo ? 16 * 1024 * 1024 : 8 * 1024 * 1024;
+  }
+
+  int _estimateUnitsForItem(UploadItem item) {
+    final chunkSize = _chunkSizeForItem(item);
+    final units = (item.size / chunkSize).ceil();
+    return max(1, units);
+  }
+
   Future<void> start({required Function(int, int) onProgress}) async {
     const int parallelFiles = 1;
 
     int uploaded = 0;
-    final total = queue.items.length;
+    final totalFiles = queue.items.length;
 
-    await BackgroundUploadService.updateNotification(0, total);
+    final totalUnitsRaw = queue.items.fold<int>(
+      0,
+      (sum, item) => sum + _estimateUnitsForItem(item),
+    );
+    final totalUnits = max(1, totalUnitsRaw);
+    int completedUnits = 0;
+
+    Future<void> reportUnits(int delta) async {
+      await _progressMutex.protect(() async {
+        completedUnits += delta;
+        if (completedUnits > totalUnits) {
+          completedUnits = totalUnits;
+        }
+
+        final now = DateTime.now();
+        final shouldPush = completedUnits >= totalUnits ||
+            now.difference(_lastNotificationAt).inMilliseconds >= 350;
+        if (shouldPush) {
+          _lastNotificationAt = now;
+          await BackgroundUploadService.updateNotification(completedUnits, totalUnits);
+        }
+      });
+    }
+
+    await BackgroundUploadService.updateNotification(0, totalUnits);
 
     Future<void> worker() async {
       while (!_aborted) {
@@ -36,18 +73,18 @@ class UploadWorker {
         if (item == null) break;
 
         try {
-              await db.updateStatus(item.asset.id, 'UPLOADING');
-              
-              await uploadItem(item);
-              
-              await db.markDone(item.asset.id, item.hash);
-              
-              uploaded++;
-              onProgress(uploaded, total);
-              
-              await BackgroundUploadService.updateNotification(uploaded, total);
+          await db.updateStatus(item.asset.id, 'UPLOADING');
+
+          await uploadItem(
+            item,
+            onUnitsProgress: reportUnits,
+          );
+
+          await db.markDone(item.asset.id, item.hash);
+
+          uploaded++;
+          onProgress(uploaded, totalFiles);
         } catch (e) {
-          
           await db.updateStatus(item.asset.id, 'ERROR');
 
           _aborted = true;
@@ -60,7 +97,7 @@ class UploadWorker {
       List.generate(parallelFiles, (_) => worker()),
     );
 
-    await BackgroundUploadService.updateNotification(total, total);
+    await BackgroundUploadService.updateNotification(totalUnits, totalUnits);
   }
 
   Future<UploadItem?> _nextItem() async {
@@ -72,17 +109,16 @@ class UploadWorker {
     });
   }
 
-  Future<void> uploadItem(UploadItem item) async {
+  Future<void> uploadItem(
+    UploadItem item, {
+    required Future<void> Function(int deltaUnits) onUnitsProgress,
+  }) async {
     final file = await item.asset.file;
     if (file == null) return;
 
-    final bool isVideo = item.mimeType.startsWith('video');
-
-    final int chunkSize = isVideo
-        ? 16 * 1024 * 1024
-        : 8 * 1024 * 1024;
-
-    final int parallelChunks = isVideo ? 2 : 3;
+    final chunkSize = _chunkSizeForItem(item);
+    final estimatedUnits = _estimateUnitsForItem(item);
+    final int parallelChunks = item.mimeType.startsWith('video') ? 2 : 3;
 
     Future<void> doUpload() async {
       final initResp = await ApiClient.post(
@@ -98,6 +134,7 @@ class UploadWorker {
 
       final status = initResp['status']?.toString();
       if (status == 'exists') {
+        await onUnitsProgress(estimatedUnits);
         return;
       }
 
@@ -119,6 +156,11 @@ class UploadWorker {
       }
 
       final totalChunks = (item.size / chunkSize).ceil();
+      final alreadyDoneChunks = max(0, (resumeOffset / chunkSize).floor());
+      if (alreadyDoneChunks > 0) {
+        await onUnitsProgress(alreadyDoneChunks);
+      }
+
       int nextChunk = (resumeOffset / chunkSize).floor();
       final chunkMutex = Mutex();
 
@@ -149,8 +191,7 @@ class UploadWorker {
               offset: offset,
               data: chunk,
             );
-
-            await Future.delayed(const Duration(milliseconds: 1));
+            await onUnitsProgress(1);
           }
         } finally {
           await raf.close();

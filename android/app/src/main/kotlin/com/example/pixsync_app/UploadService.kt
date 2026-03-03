@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -28,6 +29,7 @@ class UploadService : Service() {
     private var isForegroundStarted = false
     private lateinit var notificationManager: NotificationManager
     private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +38,15 @@ class UploadService : Service() {
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "picsync:UploadWakeLock")
         wakeLock?.setReferenceCounted(false)
         wakeLock?.acquire(10 * 60 * 60 * 1000L)
+
+        val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        wifiLock = wifiManager.createWifiLock(
+            WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+            "picsync:UploadWifiLock"
+        )
+        wifiLock?.setReferenceCounted(false)
+        wifiLock?.acquire()
+
         createNotificationChannel()
     }
 
@@ -66,7 +77,7 @@ class UploadService : Service() {
                 publishProgressNotification(indeterminate = true)
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -79,6 +90,13 @@ class UploadService : Service() {
             }
         }
         wakeLock = null
+
+        wifiLock?.let {
+            if (it.isHeld) {
+                it.release()
+            }
+        }
+        wifiLock = null
         isForegroundStarted = false
     }
 
