@@ -78,12 +78,16 @@ class UploadWorker {
     final int parallelChunks = isVideo ? 2 : 3;
 
     Future<void> doUpload() async {
-      final initResp = await ApiClient.post('/upload/init', {
-        'filename': item.asset.title,
-        'size': item.size,
-        'mime': item.mimeType,
-        'hash': item.hash,
-      });
+      final initResp = await ApiClient.post(
+        '/upload/init',
+        {
+          'filename': item.asset.title,
+          'size': item.size,
+          'mime': item.mimeType,
+          'hash': item.hash,
+        },
+        timeoutSeconds: 60,
+      );
 
       final status = initResp['status']?.toString();
       if (status == 'exists') {
@@ -150,10 +154,30 @@ class UploadWorker {
         List.generate(parallelChunks, (_) => chunkWorker()),
       );
 
-      await ApiClient.post('/upload/complete?id=$uploadId', {});
+      await completeUploadWithRetry(uploadId);
     }
 
     await doUpload();
+  }
+
+  Future<void> completeUploadWithRetry(String uploadId) async {
+    const maxAttempts = 3;
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await ApiClient.post(
+          '/upload/complete?id=$uploadId',
+          {},
+          timeoutSeconds: 60,
+        );
+        return;
+      } catch (e) {
+        if (attempt == maxAttempts) {
+          throw Exception('Upload completion failed after $maxAttempts attempts: $e');
+        }
+        await Future.delayed(Duration(seconds: attempt * 5));
+      }
+    }
   }
 
   Future<void> postChunkWithRetry({
@@ -172,7 +196,7 @@ class UploadWorker {
             'offset': offset.toString(),
           },
           body: data,
-        ).timeout(const Duration(seconds: 30));
+        ).timeout(const Duration(seconds: 60));
 
         return;
       } catch (_) {

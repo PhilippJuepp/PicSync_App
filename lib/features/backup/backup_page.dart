@@ -8,6 +8,7 @@ import 'upload_worker.dart';
 import '../../core/widgets/app_bar.dart';
 import '../../data/database/database_provider.dart';
 import '../../core/services/api_client.dart';
+import '../../core/services/background_upload_service.dart';
 import '../auth/login_screen.dart';
 
 class BackupPage extends StatefulWidget {
@@ -92,6 +93,8 @@ class _BackupPageState extends State<BackupPage> {
       errorText = null;
     });
 
+    await BackgroundUploadService.start();
+
     try {
       final db = DatabaseProvider.instance;
       final queue = await UploadQueue.fromAssets(foundAssets, db);
@@ -126,14 +129,34 @@ class _BackupPageState extends State<BackupPage> {
       await _showReLoginDialog(e);
     } catch (e) {
       if (!mounted) return;
+      final description = _errorDescription(e);
       setState(() {
         isUploading = false;
-        errorText = 'Upload fehlgeschlagen: $e';
+        errorText = 'Upload fehlgeschlagen: $description';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorText!)),
+        SnackBar(
+          content: Text(errorText!),
+          duration: const Duration(seconds: 5),
+        ),
       );
+    } finally {
+      await BackgroundUploadService.stop();
     }
+  }
+
+  String _errorDescription(dynamic error) {
+    final msg = error.toString();
+    if (msg.contains('software caused connection abort')) {
+      return 'Verbindung unterbrochen beim Finalisieren des Uploads.';
+    }
+    if (msg.contains('Timeout') || msg.contains('timeout')) {
+      return 'Timeout: Upload dauert zu lange.';
+    }
+    if (msg.contains('Connection')) {
+      return 'Verbindungsfehler zum Server.';
+    }
+    return msg;
   }
 
   Future<void> _showReLoginDialog(AuthException exception) async {
