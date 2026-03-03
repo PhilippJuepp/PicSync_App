@@ -1,4 +1,5 @@
 import '../../core/services/api_client.dart';
+import '../../core/services/background_upload_service.dart';
 import 'upload_queue.dart';
 import 'dart:math';
 import 'package:mutex/mutex.dart';
@@ -27,20 +28,24 @@ class UploadWorker {
     int uploaded = 0;
     final total = queue.items.length;
 
+    await BackgroundUploadService.updateNotification(0, total);
+
     Future<void> worker() async {
       while (!_aborted) {
         final item = await _nextItem();
         if (item == null) break;
 
         try {
-          await db.updateStatus(item.asset.id, 'UPLOADING');
-
-          await uploadItem(item);
-
-          await db.markDone(item.asset.id, item.hash);
-
-          uploaded++;
-          onProgress(uploaded, total);
+              await db.updateStatus(item.asset.id, 'UPLOADING');
+              
+              await uploadItem(item);
+              
+              await db.markDone(item.asset.id, item.hash);
+              
+              uploaded++;
+              onProgress(uploaded, total);
+              
+              await BackgroundUploadService.updateNotification(uploaded, total);
         } catch (e) {
           
           await db.updateStatus(item.asset.id, 'ERROR');
@@ -54,6 +59,8 @@ class UploadWorker {
     await Future.wait(
       List.generate(parallelFiles, (_) => worker()),
     );
+
+    await BackgroundUploadService.updateNotification(total, total);
   }
 
   Future<UploadItem?> _nextItem() async {

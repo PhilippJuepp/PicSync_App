@@ -79,9 +79,6 @@ class _BackupPageState extends State<BackupPage> {
         isScanning = false;
         errorText = 'Scan fehlgeschlagen: $e';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorText!)),
-      );
     }
   }
 
@@ -93,6 +90,7 @@ class _BackupPageState extends State<BackupPage> {
       errorText = null;
     });
 
+    await BackgroundUploadService.requestNotificationPermission();
     await BackgroundUploadService.start();
 
     try {
@@ -112,20 +110,12 @@ class _BackupPageState extends State<BackupPage> {
         isUploading = false;
         lastBackupAt = DateTime.now();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Backup abgeschlossen.')),
-      );
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() {
         isUploading = false;
         errorText = 'Session abgelaufen. Bitte erneut anmelden.';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Anmeldung abgelaufen. Bitte neu einloggen.'),
-        ),
-      );
       await _showReLoginDialog(e);
     } catch (e) {
       if (!mounted) return;
@@ -134,12 +124,6 @@ class _BackupPageState extends State<BackupPage> {
         isUploading = false;
         errorText = 'Upload fehlgeschlagen: $description';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorText!),
-          duration: const Duration(seconds: 5),
-        ),
-      );
     } finally {
       await BackgroundUploadService.stop();
     }
