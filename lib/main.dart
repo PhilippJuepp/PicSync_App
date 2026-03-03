@@ -19,6 +19,7 @@ Future<Widget> getStartScreen() async {
   final serverUrl = prefs.getString('serverUrl');
   final seenWelcome = prefs.getBool('seenWelcome') ?? false;
   final token = prefs.getString('accessToken');
+  final refreshToken = prefs.getString('refreshToken');
 
   if (serverUrl == null || serverUrl.isEmpty) {
     return const ServerConnectionScreen();
@@ -28,8 +29,15 @@ Future<Widget> getStartScreen() async {
     return const WelcomeScreen();
   }
 
-  if (token != null && token.isNotEmpty) {
+  final hasAccessToken = token != null && token.isNotEmpty;
+  final hasRefreshToken = refreshToken != null && refreshToken.isNotEmpty;
+
+  if (hasAccessToken && hasRefreshToken) {
     return const HomeShell();
+  }
+
+  if (hasAccessToken && !hasRefreshToken) {
+    await prefs.remove('accessToken');
   }
 
   return const LoginScreen();

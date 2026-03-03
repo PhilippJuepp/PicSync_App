@@ -5,6 +5,8 @@ import '../../core/widgets/auth_background_wrapper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/api_client.dart';
 import '../home/home_shell.dart';
+import '../onboarding/welcome_screen.dart';
+import '../server_conncection/server_connection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +19,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  Future<void> _handleBack() async {
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    final serverUrl = prefs.getString('serverUrl');
+    final Widget fallbackScreen = (serverUrl == null || serverUrl.isEmpty)
+        ? const ServerConnectionScreen()
+        : const WelcomeScreen();
+
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => fallbackScreen),
+      (_) => false,
+    );
+  }
 
   @override
   void dispose() {
@@ -94,35 +118,43 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final bool isTablet = size.width > 600;
+    final canPop = Navigator.of(context).canPop();
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: AuthBackgroundWrapper(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: isTablet ? 400 : double.infinity),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Back button
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 18),
-                          const SizedBox(width: 4),
-                          Text(
-                            AppLocalizations.of(context)!.back,
-                            style: const TextStyle(color: Colors.white70, fontSize: 16),
-                          ),
-                        ],
+    return PopScope(
+      canPop: canPop,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) {
+          await _handleBack();
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: AuthBackgroundWrapper(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isTablet ? 400 : double.infinity),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Back button
+                      GestureDetector(
+                        onTap: _handleBack,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 18),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(context)!.back,
+                              style: const TextStyle(color: Colors.white70, fontSize: 16),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
                     const SizedBox(height: 40),
 
@@ -211,7 +243,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     )
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

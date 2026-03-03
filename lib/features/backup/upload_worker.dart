@@ -14,6 +14,13 @@ class UploadWorker {
 
   UploadWorker(this.queue, this.db);
 
+  int _asInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
+  }
+
   Future<void> start({required Function(int, int) onProgress}) async {
     const int parallelFiles = 1;
 
@@ -78,15 +85,26 @@ class UploadWorker {
         'hash': item.hash,
       });
 
-      int resumeOffset = 0;
-
-      if (initResp['status'] == 'exists') {
-        resumeOffset = initResp['offset'];
+      final status = initResp['status']?.toString();
+      if (status == 'exists') {
+        return;
       }
 
-      final uploadId = initResp['upload_id'];
-      if (uploadId == null) {
-        throw Exception('Upload ID missing');
+      int resumeOffset = 0;
+
+      resumeOffset = _asInt(initResp['offset']);
+
+      final uploadIdRaw = initResp['upload_id'];
+      final uploadId = uploadIdRaw?.toString();
+      if (uploadId == null || uploadId.isEmpty) {
+        throw Exception('Upload ID missing (status=$status, response=$initResp)');
+      }
+
+      if (resumeOffset < 0) {
+        resumeOffset = 0;
+      }
+      if (resumeOffset > item.size) {
+        resumeOffset = item.size;
       }
 
       final totalChunks = (item.size / chunkSize).ceil();
@@ -135,16 +153,7 @@ class UploadWorker {
       await ApiClient.post('/upload/complete?id=$uploadId', {});
     }
 
-    try {
-      await doUpload();
-    } catch (e) {
-      if (e.toString().contains('401')) {
-        await ApiClient.refreshToken();
-        await doUpload();
-      } else {
-        rethrow;
-      }
-    }
+    await doUpload();
   }
 
   Future<void> postChunkWithRetry({

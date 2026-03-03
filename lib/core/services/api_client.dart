@@ -12,6 +12,22 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode): $message';
 }
 
+enum AuthFailureReason {
+  missingRefreshToken,
+  refreshRejected,
+  unauthorized,
+}
+
+class AuthException extends ApiException {
+  final AuthFailureReason reason;
+
+  AuthException(
+    String message, {
+    required this.reason,
+    int? statusCode,
+  }) : super(message, statusCode: statusCode);
+}
+
 class ApiClient {
   static Future<String> getBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,16 +56,27 @@ class ApiClient {
 
     try {
       await refreshToken();
+    } on AuthException {
+      await logoutLocally();
+      rethrow;
     } catch (_) {
       await logoutLocally();
-      throw ApiException("Unauthorized", statusCode: 401);
+      throw AuthException(
+        'Session abgelaufen. Bitte erneut anmelden.',
+        reason: AuthFailureReason.unauthorized,
+        statusCode: 401,
+      );
     }
 
     final retry = await send();
 
     if (retry.statusCode == 401) {
       await logoutLocally();
-      throw ApiException("Unauthorized", statusCode: 401);
+      throw AuthException(
+        'Session abgelaufen. Bitte erneut anmelden.',
+        reason: AuthFailureReason.unauthorized,
+        statusCode: 401,
+      );
     }
 
     return retry;
@@ -146,7 +173,13 @@ class ApiClient {
   static Future<void> refreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString('refreshToken');
-    if (refreshToken == null) throw Exception("No refresh token stored");
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw AuthException(
+        'Kein Refresh-Token gespeichert.',
+        reason: AuthFailureReason.missingRefreshToken,
+        statusCode: 401,
+      );
+    }
 
     final baseUrl = await getBaseUrl();
     final res = await http.post(
@@ -162,7 +195,11 @@ class ApiClient {
         await prefs.setString('refreshToken', body['refresh_token']);
       }
     } else {
-      throw Exception('Refresh token failed: ${res.body}');
+      throw AuthException(
+        'Token-Refresh fehlgeschlagen.',
+        reason: AuthFailureReason.refreshRejected,
+        statusCode: res.statusCode,
+      );
     }
   }
 

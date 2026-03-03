@@ -12,6 +12,11 @@ class GalleryScanner {
       total += await a.assetCountAsync;
     }
 
+    if (total == 0) {
+      onProgress(1);
+      return all;
+    }
+
     int processed = 0;
 
     for (final album in albums) {
@@ -23,6 +28,8 @@ class GalleryScanner {
         onProgress(processed / total);
       }
     }
+
+    onProgress(1);
 
     return all;
   }

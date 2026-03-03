@@ -17,7 +17,12 @@ class AppDatabase extends _$AppDatabase {
 
   Future<UploadState?> getByLocalId(String localId) {
     return (select(uploadStates)
-          ..where((tbl) => tbl.localId.equals(localId)))
+          ..where((tbl) => tbl.localId.equals(localId))
+          ..orderBy([
+            (tbl) => OrderingTerm.desc(tbl.updatedAt),
+            (tbl) => OrderingTerm.desc(tbl.id),
+          ])
+          ..limit(1))
         .getSingleOrNull();
   }
 
@@ -26,12 +31,25 @@ class AppDatabase extends _$AppDatabase {
     required String hash,
     required int size,
   }) async {
-    await into(uploadStates).insertOnConflictUpdate(
+    final existing = await getByLocalId(localId);
+    if (existing == null) {
+      await into(uploadStates).insert(
+        UploadStatesCompanion.insert(
+          localId: localId,
+          hash: hash,
+          size: size,
+          status: 'NEW',
+        ),
+      );
+      return;
+    }
+
+    await (update(uploadStates)..where((tbl) => tbl.id.equals(existing.id))).write(
       UploadStatesCompanion(
-        localId: Value(localId),
         hash: Value(hash),
         size: Value(size),
         status: const Value('NEW'),
+        updatedAt: Value(DateTime.now()),
       ),
     );
   }
