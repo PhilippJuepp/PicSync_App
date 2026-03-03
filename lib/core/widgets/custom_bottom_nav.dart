@@ -157,15 +157,18 @@ class AdaptiveNavBar extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28.0),
-            child: NavigationBar(
-              height: 64.0,
-              backgroundColor: surfaceColor.withValues(alpha: 0.95),
-              indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-              selectedIndex: index,
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              destinations: items,
-              onDestinationSelected: onTap,
-              overlayColor: WidgetStateProperty.all(Colors.transparent),
+            child: TooltipVisibility(
+              visible: false,
+              child: NavigationBar(
+                height: 64.0,
+                backgroundColor: surfaceColor.withValues(alpha: 0.95),
+                indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                selectedIndex: index,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: items,
+                onDestinationSelected: onTap,
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+              ),
             ),
           ),
         ),
